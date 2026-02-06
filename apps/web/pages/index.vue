@@ -204,8 +204,8 @@ const stats = {
                 <span class="trust-badge trust-badge-quality">품질보증</span>
                 <span class="trust-badge trust-badge-verified">실물인증</span>
               </div>
-              <p class="text-sm font-medium">{{ product.title || `${product.brand} ${product.model}` }}</p>
-              <p class="text-xs text-gray-500">{{ product.color }}</p>
+              <p class="text-sm font-medium">{{ product.model?.name }}</p>
+              <p class="text-xs text-gray-500">{{ product.variant?.color }}</p>
               <div class="flex items-baseline gap-2">
                 <span class="price-tag">{{ product.sellingPrice?.toLocaleString() }}원</span>
               </div>

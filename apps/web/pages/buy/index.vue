@@ -287,19 +287,19 @@ watch(selectedCategory, () => {
                   >
                     {{ PRODUCT_GRADES[product.grade as ProductGrade].label }}
                   </span>
-                  <span class="text-xs text-gray-500">{{ product.variant }}</span>
+                  <span class="text-xs text-gray-500">{{ product.variant?.storage }}</span>
                 </div>
 
                 <p class="font-medium text-sm group-hover:text-primary-600 transition-colors">
-                  {{ product.title || `${product.brand} ${product.model}` }}
+                  {{ product.model?.name }}
                 </p>
 
-                <p class="text-xs text-gray-500">{{ product.color }}</p>
+                <p class="text-xs text-gray-500">{{ product.variant?.color }}</p>
 
-                <div v-if="product.originalPrice && product.discountRate" class="flex items-baseline gap-2 pt-1">
+                <div v-if="product.variant?.originalMsrp && product.discountRate" class="flex items-baseline gap-2 pt-1">
                   <span class="discount-rate">{{ product.discountRate }}%</span>
                   <span class="discount-original text-xs text-gray-400 line-through">
-                    {{ product.originalPrice.toLocaleString() }}원
+                    {{ product.variant.originalMsrp.toLocaleString() }}원
                   </span>
                 </div>
                 <p class="price-tag">

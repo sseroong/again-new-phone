@@ -119,7 +119,7 @@ export class SellRequestsService {
     }
 
     // 검수 전까지만 취소 가능
-    const cancelableStatuses = [
+    const cancelableStatuses: SellRequestStatus[] = [
       SellRequestStatus.PENDING,
       SellRequestStatus.QUOTED,
       SellRequestStatus.ACCEPTED,

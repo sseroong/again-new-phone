@@ -25,7 +25,7 @@ const { data: similarProducts } = await useAsyncData(
 );
 
 useHead({
-  title: product.value ? `${product.value.brand} ${product.value.model}` : '상품 상세',
+  title: product.value ? `${product.value.model?.name}` : '상품 상세',
 });
 
 // 주문하기
@@ -84,7 +84,7 @@ const gradeInfo = computed(() => {
             <span>></span>
             <NuxtLink to="/buy" class="hover:text-gray-700">구매하기</NuxtLink>
             <span>></span>
-            <span class="text-gray-900">{{ product.brand }} {{ product.model }}</span>
+            <span class="text-gray-900">{{ product.model?.name }}</span>
           </nav>
         </div>
       </div>
@@ -129,17 +129,17 @@ const gradeInfo = computed(() => {
               </div>
 
               <h1 class="text-2xl font-bold">
-                {{ product.brand }} {{ product.model }} {{ product.variant }}
+                {{ product.model?.name }} {{ product.variant?.storage }}
               </h1>
-              <p class="text-gray-500 mt-1">{{ product.color }}</p>
+              <p class="text-gray-500 mt-1">{{ product.variant?.color }}</p>
             </div>
 
             <!-- 가격 -->
             <div class="bg-gray-50 rounded-xl p-6">
-              <div v-if="product.originalPrice" class="flex items-baseline gap-3 mb-1">
+              <div v-if="product.variant?.originalMsrp && product.discountRate" class="flex items-baseline gap-3 mb-1">
                 <span class="text-red-500 text-lg font-bold">{{ product.discountRate }}%</span>
                 <span class="text-gray-400 line-through">
-                  {{ product.originalPrice?.toLocaleString() }}원
+                  {{ product.variant.originalMsrp?.toLocaleString() }}원
                 </span>
               </div>
               <p class="text-3xl font-bold text-primary-600">
@@ -171,11 +171,11 @@ const gradeInfo = computed(() => {
               </div>
               <div class="flex justify-between px-4 py-3">
                 <span class="text-sm text-gray-500">용량</span>
-                <span class="text-sm font-medium">{{ product.variant }}</span>
+                <span class="text-sm font-medium">{{ product.variant?.storage }}</span>
               </div>
               <div class="flex justify-between px-4 py-3">
                 <span class="text-sm text-gray-500">색상</span>
-                <span class="text-sm font-medium">{{ product.color }}</span>
+                <span class="text-sm font-medium">{{ product.variant?.color }}</span>
               </div>
             </div>
 
@@ -215,9 +215,9 @@ const gradeInfo = computed(() => {
               </div>
               <div class="p-3 space-y-1">
                 <p class="font-medium text-sm group-hover:text-primary-600">
-                  {{ similar.brand }} {{ similar.model }}
+                  {{ similar.model?.name }}
                 </p>
-                <p class="text-xs text-gray-500">{{ similar.variant }} · {{ similar.color }}</p>
+                <p class="text-xs text-gray-500">{{ similar.variant?.storage }} · {{ similar.variant?.color }}</p>
                 <p class="price-tag">{{ similar.sellingPrice?.toLocaleString() }}원</p>
               </div>
             </NuxtLink>
