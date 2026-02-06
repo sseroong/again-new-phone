@@ -4,7 +4,12 @@ definePageMeta({
   middleware: ['auth'],
 });
 
-useHead({ title: '주문서 작성' });
+useHead({
+  title: '주문서 작성',
+  script: [
+    { src: 'https://js.tosspayments.com/v2/standard' },
+  ],
+});
 
 const route = useRoute();
 const config = useRuntimeConfig();
@@ -76,27 +81,35 @@ const handlePayment = async () => {
     return;
   }
 
+  // 결제 모듈 사전 확인 (주문 생성 전에 체크)
+  const tossPayments = (window as any).TossPayments;
+  if (!tossPayments) {
+    errorMessage.value = '결제 모듈을 불러올 수 없습니다. 페이지를 새로고침해주세요.';
+    return;
+  }
+
   isProcessing.value = true;
   errorMessage.value = '';
 
   try {
     // 1. 주문 생성
+    const body: Record<string, any> = {
+      items: [{ productId, quantity: 1 }],
+      shippingName: shippingForm.shippingName,
+      shippingPhone: shippingForm.shippingPhone,
+      shippingZipCode: shippingForm.shippingZipCode,
+      shippingAddress: shippingForm.shippingAddress,
+      shippingDetail: shippingForm.shippingDetail,
+    };
+    if (shippingForm.shippingMemo) {
+      body.shippingMemo = shippingForm.shippingMemo;
+    }
+
     const order = await $fetch<any>(`${apiBase}/orders`, {
       method: 'POST',
       headers: authHeaders.value,
-      body: {
-        items: [{ productId, quantity: 1 }],
-        ...shippingForm,
-      },
+      body,
     });
-
-    // 2. Toss Payment Widget 호출
-    const tossPayments = (window as any).TossPayments;
-    if (!tossPayments) {
-      errorMessage.value = '결제 모듈을 불러올 수 없습니다. 페이지를 새로고침해주세요.';
-      isProcessing.value = false;
-      return;
-    }
 
     const payment = tossPayments(tossClientKey);
     const widget = payment.widgets({ customerKey: authStore.user?.id || 'ANONYMOUS' });
@@ -118,7 +131,8 @@ const handlePayment = async () => {
     if (e?.code === 'USER_CANCEL') {
       errorMessage.value = '';
     } else {
-      errorMessage.value = e?.data?.message || e?.message || '주문 처리 중 오류가 발생했습니다.';
+      const msg = e?.data?.message;
+      errorMessage.value = Array.isArray(msg) ? msg.join(', ') : (msg || e?.message || '주문 처리 중 오류가 발생했습니다.');
     }
   } finally {
     isProcessing.value = false;
@@ -128,11 +142,6 @@ const handlePayment = async () => {
 
 <template>
   <div class="bg-gray-50 min-h-screen">
-    <!-- Toss Payments SDK -->
-    <Head>
-      <Script src="https://js.tosspayments.com/v2/standard" strategy="beforeInteractive" />
-    </Head>
-
     <!-- Page Header -->
     <div class="bg-white border-b border-gray-200">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
