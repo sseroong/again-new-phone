@@ -18,6 +18,9 @@ useHead({
   title: '구매하기',
 });
 
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBaseUrl as string;
+
 // 필터 상태
 const selectedCategory = ref<DeviceCategory | null>(null);
 const selectedBrands = ref<Brand[]>([]);
@@ -29,23 +32,34 @@ const sortBy = ref<'price_asc' | 'price_desc' | 'newest' | 'popular'>('newest');
 // 페이지네이션
 const page = ref(1);
 const pageSize = ref(24);
-const totalItems = ref(312);
 
-// 임시 상품 데이터
-const products = computed(() => {
-  return Array.from({ length: pageSize.value }, (_, i) => ({
-    id: `product-${page.value}-${i}`,
-    model: ['갤럭시 S24 울트라', '아이폰 15 프로', '갤럭시 Z플립6', '아이폰 14'][i % 4],
-    variant: ['256GB', '512GB', '128GB'][i % 3],
-    color: ['티타늄 블랙', '내추럴 티타늄', '퍼플', '블루'][i % 4],
-    grade: (['S_PLUS', 'S', 'A', 'B'] as const)[i % 4],
-    originalPrice: 1500000 + i * 50000,
-    sellingPrice: 1200000 + i * 30000,
-    discountRate: 20 + (i % 10),
-    batteryHealth: 85 + (i % 15),
-    rating: 4.5 + (i % 5) * 0.1,
-  }));
+// API 쿼리 파라미터
+const queryParams = computed(() => {
+  const params: Record<string, any> = {
+    page: page.value,
+    limit: pageSize.value,
+    sortBy: sortBy.value,
+  };
+  if (selectedCategory.value) params.category = selectedCategory.value;
+  if (selectedBrands.value.length) params.brand = selectedBrands.value.join(',');
+  if (selectedGrades.value.length) params.grade = selectedGrades.value.join(',');
+  if (selectedStorage.value.length) params.storage = selectedStorage.value.join(',');
+  if (priceRange.value) {
+    params.minPrice = priceRange.value.min;
+    params.maxPrice = priceRange.value.max;
+  }
+  return params;
 });
+
+// API 연동 - 상품 목록
+const { data: productsData, pending } = await useAsyncData(
+  'products-list',
+  () => $fetch<any>(`${apiBase}/products`, { params: queryParams.value }),
+  { watch: [queryParams] }
+);
+
+const products = computed(() => productsData.value?.data || []);
+const totalItems = computed(() => productsData.value?.meta?.total || 0);
 
 // 카테고리 목록
 const categories = [
@@ -71,7 +85,13 @@ const resetFilters = () => {
   selectedGrades.value = [];
   selectedStorage.value = [];
   priceRange.value = null;
+  page.value = 1;
 };
+
+// 카테고리 변경 시 페이지 리셋
+watch(selectedCategory, () => {
+  page.value = 1;
+});
 </script>
 
 <template>
@@ -202,7 +222,7 @@ const resetFilters = () => {
                     :value="range"
                     :checked="priceRange?.min === range.min"
                     class="text-primary-600 focus:ring-primary-500"
-                    @change="priceRange = { min: range.min, max: range.max }"
+                    @change="priceRange = { min: range.min, max: range.max }; page = 1"
                   />
                   <span class="text-sm text-gray-600">{{ range.label }}</span>
                 </label>
@@ -227,8 +247,22 @@ const resetFilters = () => {
             />
           </div>
 
+          <!-- 로딩 -->
+          <div v-if="pending" class="flex justify-center py-12">
+            <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 text-gray-400 animate-spin" />
+          </div>
+
+          <!-- 상품 없음 -->
+          <div v-else-if="!products.length" class="text-center py-12">
+            <UIcon name="i-heroicons-inbox" class="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p class="text-gray-500">검색 조건에 맞는 상품이 없습니다.</p>
+            <UButton variant="outline" class="mt-4" @click="resetFilters">
+              필터 초기화
+            </UButton>
+          </div>
+
           <!-- 상품 그리드 -->
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <NuxtLink
               v-for="product in products"
               :key="product.id"
@@ -236,7 +270,8 @@ const resetFilters = () => {
               class="product-card group"
             >
               <!-- 상품 이미지 -->
-              <div class="aspect-square bg-gray-100 relative overflow-hidden">
+              <div class="aspect-square bg-gray-100 relative overflow-hidden flex items-center justify-center">
+                <UIcon name="i-heroicons-device-phone-mobile" class="w-16 h-16 text-gray-300" />
                 <div class="absolute top-2 left-2 flex flex-wrap gap-1">
                   <span class="trust-badge trust-badge-quality">품질보증</span>
                   <span class="trust-badge trust-badge-verified">실물인증</span>
@@ -247,41 +282,41 @@ const resetFilters = () => {
               <div class="p-3 space-y-1">
                 <div class="flex items-center gap-1">
                   <span
-                    class="grade-badge"
-                    :class="`bg-${PRODUCT_GRADES[product.grade].color}-100 text-${PRODUCT_GRADES[product.grade].color}-700`"
+                    v-if="PRODUCT_GRADES[product.grade as ProductGrade]"
+                    class="grade-badge text-xs px-1.5 py-0.5 rounded"
                   >
-                    {{ PRODUCT_GRADES[product.grade].label }}
+                    {{ PRODUCT_GRADES[product.grade as ProductGrade].label }}
                   </span>
                   <span class="text-xs text-gray-500">{{ product.variant }}</span>
                 </div>
 
                 <p class="font-medium text-sm group-hover:text-primary-600 transition-colors">
-                  {{ product.model }}
+                  {{ product.title || `${product.brand} ${product.model}` }}
                 </p>
 
                 <p class="text-xs text-gray-500">{{ product.color }}</p>
 
-                <div class="flex items-baseline gap-2 pt-1">
+                <div v-if="product.originalPrice && product.discountRate" class="flex items-baseline gap-2 pt-1">
                   <span class="discount-rate">{{ product.discountRate }}%</span>
-                  <span class="price-original">
+                  <span class="discount-original text-xs text-gray-400 line-through">
                     {{ product.originalPrice.toLocaleString() }}원
                   </span>
                 </div>
                 <p class="price-tag">
-                  {{ product.sellingPrice.toLocaleString() }}원
+                  {{ product.sellingPrice?.toLocaleString() }}원
                 </p>
 
                 <div class="flex items-center gap-2 text-xs text-gray-500 pt-1">
-                  <span>배터리 {{ product.batteryHealth }}%</span>
-                  <span>·</span>
-                  <span>{{ product.rating.toFixed(1) }}</span>
+                  <span v-if="product.batteryHealth">배터리 {{ product.batteryHealth }}%</span>
+                  <span v-if="product.batteryHealth && product.rating">·</span>
+                  <span v-if="product.rating">{{ Number(product.rating).toFixed(1) }}</span>
                 </div>
               </div>
             </NuxtLink>
           </div>
 
           <!-- 페이지네이션 -->
-          <div class="flex justify-center mt-8">
+          <div v-if="totalItems > pageSize" class="flex justify-center mt-8">
             <UPagination
               v-model="page"
               :total="totalItems"

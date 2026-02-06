@@ -9,13 +9,31 @@ useHead({
   title: '홈',
 });
 
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBaseUrl as string;
+
 // 카테고리 목록
 const categories = Object.entries(DEVICE_CATEGORIES).map(([key, value]) => ({
   key,
   ...value,
 }));
 
-// 통계 데이터 (임시)
+// 인기 상품 API 연동
+const { data: popularProducts } = await useAsyncData('popular-products', () =>
+  $fetch<any[]>(`${apiBase}/products/popular`)
+);
+
+// 최근 리뷰 API 연동
+const { data: recentReviews } = await useAsyncData('recent-reviews', () =>
+  $fetch<any>(`${apiBase}/reviews`, { params: { limit: 3 } })
+);
+
+// 오늘의 시세 API 연동
+const { data: todayPrices } = await useAsyncData('today-prices', () =>
+  $fetch<any[]>(`${apiBase}/prices/today`)
+);
+
+// 통계 데이터
 const stats = {
   totalQuotes: '100만+',
   satisfaction: '4.5',
@@ -98,8 +116,37 @@ const stats = {
           </NuxtLink>
         </div>
 
-        <!-- 시세 카드 (임시 데이터) -->
-        <div class="bg-gray-50 rounded-xl p-6">
+        <div v-if="todayPrices?.length" class="grid md:grid-cols-2 gap-4">
+          <div
+            v-for="price in todayPrices.slice(0, 2)"
+            :key="price.id || price.model"
+            class="bg-gray-50 rounded-xl p-6"
+          >
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                <UIcon name="i-heroicons-device-phone-mobile" class="w-8 h-8 text-gray-400" />
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">{{ price.brand || '브랜드' }}</p>
+                <p class="font-bold">{{ price.modelName || price.model }}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div
+                v-for="gradePrice in (price.grades || []).slice(0, 4)"
+                :key="gradePrice.grade"
+                class="flex justify-between items-center p-3 bg-white rounded-lg"
+              >
+                <span class="text-sm font-medium">{{ gradePrice.grade }}등급</span>
+                <span class="font-bold text-primary-600">{{ gradePrice.price?.toLocaleString() }}원</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 시세 데이터 없을 때 -->
+        <div v-else class="bg-gray-50 rounded-xl p-6">
           <div class="flex items-center gap-4 mb-4">
             <div class="w-16 h-16 bg-gray-200 rounded-lg" />
             <div>
@@ -141,26 +188,51 @@ const stats = {
           </NuxtLink>
         </div>
 
-        <!-- 상품 그리드 (placeholder) -->
+        <!-- API 데이터 있을 때 -->
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          <div
-            v-for="i in 5"
-            :key="i"
+          <NuxtLink
+            v-for="product in (popularProducts || []).slice(0, 5)"
+            :key="product.id"
+            :to="`/buy/${product.id}`"
             class="product-card p-4"
           >
-            <div class="aspect-square bg-gray-100 rounded-lg mb-3" />
+            <div class="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+              <UIcon name="i-heroicons-device-phone-mobile" class="w-12 h-12 text-gray-300" />
+            </div>
             <div class="space-y-1">
               <div class="flex gap-1">
                 <span class="trust-badge trust-badge-quality">품질보증</span>
                 <span class="trust-badge trust-badge-verified">실물인증</span>
               </div>
-              <p class="text-sm font-medium">갤럭시 S24 울트라 256GB</p>
-              <p class="text-xs text-gray-500">티타늄 블랙</p>
+              <p class="text-sm font-medium">{{ product.title || `${product.brand} ${product.model}` }}</p>
+              <p class="text-xs text-gray-500">{{ product.color }}</p>
               <div class="flex items-baseline gap-2">
-                <span class="price-tag">1,122,000원</span>
+                <span class="price-tag">{{ product.sellingPrice?.toLocaleString() }}원</span>
               </div>
             </div>
-          </div>
+          </NuxtLink>
+
+          <!-- API 데이터 없을 때 폴백 -->
+          <template v-if="!popularProducts?.length">
+            <div
+              v-for="i in 5"
+              :key="i"
+              class="product-card p-4"
+            >
+              <div class="aspect-square bg-gray-100 rounded-lg mb-3" />
+              <div class="space-y-1">
+                <div class="flex gap-1">
+                  <span class="trust-badge trust-badge-quality">품질보증</span>
+                  <span class="trust-badge trust-badge-verified">실물인증</span>
+                </div>
+                <p class="text-sm font-medium">갤럭시 S24 울트라 256GB</p>
+                <p class="text-xs text-gray-500">티타늄 블랙</p>
+                <div class="flex items-baseline gap-2">
+                  <span class="price-tag">1,122,000원</span>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </section>
@@ -212,26 +284,55 @@ const stats = {
         </div>
 
         <div class="grid md:grid-cols-3 gap-4">
-          <div
-            v-for="i in 3"
-            :key="i"
-            class="bg-white rounded-xl p-5 border border-gray-100"
-          >
-            <div class="flex items-center gap-2 mb-2">
-              <span class="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded">
-                판매
-              </span>
-              <span class="text-sm text-gray-600">아이폰 14 Pro 256GB</span>
+          <template v-if="recentReviews?.data?.length">
+            <div
+              v-for="review in recentReviews.data.slice(0, 3)"
+              :key="review.id"
+              class="bg-white rounded-xl p-5 border border-gray-100"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <span
+                  class="px-2 py-0.5 text-xs font-medium rounded"
+                  :class="review.type === 'SELL' ? 'bg-primary-100 text-primary-700' : 'bg-blue-100 text-blue-700'"
+                >
+                  {{ review.type === 'SELL' ? '판매' : '구매' }}
+                </span>
+                <span class="text-sm text-gray-600">{{ review.productModel }}</span>
+              </div>
+              <p class="font-medium mb-2">"{{ review.title }}"</p>
+              <p class="text-sm text-gray-500 line-clamp-2">
+                {{ review.content }}
+              </p>
+              <div class="flex items-center justify-between mt-4 text-xs text-gray-400">
+                <span>{{ new Date(review.createdAt).toLocaleDateString('ko-KR') }}</span>
+                <span>{{ review.userName }}</span>
+              </div>
             </div>
-            <p class="font-medium mb-2">"빠르고 편한 거래였어요"</p>
-            <p class="text-sm text-gray-500 line-clamp-2">
-              견적부터 입금까지 정말 빠르게 진행됐습니다. 다음에도 이용할게요!
-            </p>
-            <div class="flex items-center justify-between mt-4 text-xs text-gray-400">
-              <span>2024.01.15</span>
-              <span>김**</span>
+          </template>
+
+          <!-- 폴백 -->
+          <template v-else>
+            <div
+              v-for="i in 3"
+              :key="i"
+              class="bg-white rounded-xl p-5 border border-gray-100"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <span class="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded">
+                  판매
+                </span>
+                <span class="text-sm text-gray-600">아이폰 14 Pro 256GB</span>
+              </div>
+              <p class="font-medium mb-2">"빠르고 편한 거래였어요"</p>
+              <p class="text-sm text-gray-500 line-clamp-2">
+                견적부터 입금까지 정말 빠르게 진행됐습니다. 다음에도 이용할게요!
+              </p>
+              <div class="flex items-center justify-between mt-4 text-xs text-gray-400">
+                <span>2024.01.15</span>
+                <span>김**</span>
+              </div>
             </div>
-          </div>
+          </template>
         </div>
       </div>
     </section>

@@ -15,7 +15,7 @@ export default defineNuxtConfig({
     jwtSecret: process.env.JWT_SECRET,
     // 클라이언트에서도 사용 가능
     public: {
-      apiBaseUrl: process.env.API_URL || 'http://localhost:3001',
+      apiBaseUrl: process.env.API_URL || 'http://localhost:3001/api',
       siteName: '폰마켓',
       siteDescription: '중고 전자기기 거래 플랫폼',
     },

@@ -10,15 +10,22 @@ import {
 
 definePageMeta({
   layout: 'default',
+  middleware: ['auth'],
 });
 
 useHead({
   title: '판매하기',
 });
 
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBaseUrl as string;
+const authStore = useAuthStore();
+
 // 판매 단계
 const currentStep = ref(1);
 const totalSteps = 4;
+const isSubmitting = ref(false);
+const submitError = ref('');
 
 // 선택 데이터
 const selectedCategory = ref<DeviceCategory | null>(null);
@@ -40,28 +47,57 @@ const brands = Object.entries(BRANDS).map(([key, value]) => ({
   ...value,
 }));
 
-// 임시 모델 목록
-const models = computed(() => {
-  if (!selectedBrand.value) return [];
+// API - 모델 목록
+const { data: modelsData } = await useAsyncData(
+  'sell-models',
+  () => {
+    if (!selectedBrand.value || !selectedCategory.value) return Promise.resolve([]);
+    return $fetch<any[]>(`${apiBase}/products/models`, {
+      params: { category: selectedCategory.value, brand: selectedBrand.value },
+    });
+  },
+  { watch: [selectedBrand, selectedCategory] }
+);
 
-  const modelsByBrand: Record<Brand, string[]> = {
+const models = computed(() => {
+  if (modelsData.value?.length) {
+    return modelsData.value.map((m: any) => m.name || m.model || m);
+  }
+  // 폴백 데이터
+  if (!selectedBrand.value) return [];
+  const fallback: Record<Brand, string[]> = {
     APPLE: ['아이폰 15 Pro Max', '아이폰 15 Pro', '아이폰 15', '아이폰 14 Pro Max', '아이폰 14 Pro', '아이폰 14'],
     SAMSUNG: ['갤럭시 S24 울트라', '갤럭시 S24+', '갤럭시 S24', '갤럭시 Z플립6', '갤럭시 Z폴드6'],
     LG: ['LG 벨벳', 'LG V50', 'LG G8'],
     LENOVO: ['레노버 P11', '레노버 Tab M10'],
     OTHER: ['기타 모델'],
   };
-
-  return modelsByBrand[selectedBrand.value] || [];
+  return fallback[selectedBrand.value] || [];
 });
 
-// 임시 용량 옵션
+// 용량 옵션
 const variants = ['64GB', '128GB', '256GB', '512GB', '1TB'];
 
-// 예상 견적 (임시)
-const estimatedPrice = computed(() => {
-  if (!selectedModel.value || !selectedGrade.value) return null;
+// API - 예상 견적
+const { data: estimateData } = await useAsyncData(
+  'sell-estimate',
+  () => {
+    if (!selectedModel.value || !selectedGrade.value || !selectedVariant.value) return Promise.resolve(null);
+    return $fetch<any>(`${apiBase}/sell-requests/estimate/price`, {
+      params: {
+        model: selectedModel.value,
+        grade: selectedGrade.value,
+        variant: selectedVariant.value,
+      },
+    }).catch(() => null);
+  },
+  { watch: [selectedModel, selectedGrade, selectedVariant] }
+);
 
+const estimatedPrice = computed(() => {
+  if (estimateData.value?.price) return estimateData.value.price;
+  // 폴백 계산
+  if (!selectedModel.value || !selectedGrade.value) return null;
   const basePrices: Record<string, number> = {
     '아이폰 15 Pro Max': 1200000,
     '아이폰 15 Pro': 1000000,
@@ -70,18 +106,11 @@ const estimatedPrice = computed(() => {
     '갤럭시 S24+': 900000,
     '갤럭시 S24': 700000,
   };
-
   const gradeMultipliers: Record<string, number> = {
-    A: 1,
-    B: 0.85,
-    C: 0.7,
-    D: 0.5,
-    E: 0.3,
+    A: 1, B: 0.85, C: 0.7, D: 0.5, E: 0.3,
   };
-
   const basePrice = basePrices[selectedModel.value] || 500000;
   const multiplier = gradeMultipliers[selectedGrade.value] || 0.5;
-
   return Math.round(basePrice * multiplier);
 });
 
@@ -101,18 +130,45 @@ const prevStep = () => {
 // 다음 단계 가능 여부
 const canProceed = computed(() => {
   switch (currentStep.value) {
-    case 1:
-      return selectedCategory.value !== null;
-    case 2:
-      return selectedBrand.value !== null && selectedModel.value !== null && selectedVariant.value !== null;
-    case 3:
-      return selectedGrade.value !== null;
-    case 4:
-      return selectedTradeMethod.value !== null;
-    default:
-      return false;
+    case 1: return selectedCategory.value !== null;
+    case 2: return selectedBrand.value !== null && selectedModel.value !== null && selectedVariant.value !== null;
+    case 3: return selectedGrade.value !== null;
+    case 4: return selectedTradeMethod.value !== null;
+    default: return false;
   }
 });
+
+// 판매 접수
+const handleSubmit = async () => {
+  if (!canProceed.value) return;
+
+  isSubmitting.value = true;
+  submitError.value = '';
+
+  try {
+    await $fetch(`${apiBase}/sell-requests`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authStore.tokens?.accessToken}`,
+      },
+      body: {
+        category: selectedCategory.value,
+        brand: selectedBrand.value,
+        model: selectedModel.value,
+        variant: selectedVariant.value,
+        selfGrade: selectedGrade.value,
+        tradeMethod: selectedTradeMethod.value,
+        estimatedPrice: estimatedPrice.value,
+      },
+    });
+
+    navigateTo('/sell/complete');
+  } catch (e: any) {
+    submitError.value = e?.data?.message || '판매 접수에 실패했습니다.';
+  } finally {
+    isSubmitting.value = false;
+  }
+};
 </script>
 
 <template>
@@ -123,7 +179,7 @@ const canProceed = computed(() => {
         <h1 class="text-2xl font-bold">판매하기</h1>
         <nav class="flex items-center gap-2 mt-2 text-sm text-gray-500">
           <NuxtLink to="/" class="hover:text-gray-700">HOME</NuxtLink>
-          <span>›</span>
+          <span>></span>
           <span class="text-gray-900">판매하기</span>
         </nav>
       </div>
@@ -137,6 +193,16 @@ const canProceed = computed(() => {
         </div>
         <UProgress :value="(currentStep / totalSteps) * 100" />
       </div>
+
+      <!-- 에러 메시지 -->
+      <UAlert
+        v-if="submitError"
+        color="red"
+        variant="soft"
+        :title="submitError"
+        icon="i-heroicons-exclamation-triangle"
+        class="mb-4"
+      />
 
       <!-- Step 1: 카테고리 선택 -->
       <div v-if="currentStep === 1" class="bg-white rounded-xl p-6">
@@ -327,7 +393,8 @@ const canProceed = computed(() => {
           size="lg"
           class="flex-1"
           :disabled="!canProceed"
-          @click="navigateTo('/sell/complete')"
+          :loading="isSubmitting"
+          @click="handleSubmit"
         >
           판매 접수하기
         </UButton>
