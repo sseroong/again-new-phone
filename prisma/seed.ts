@@ -1,4 +1,4 @@
-import { PrismaClient, DeviceCategory, Brand, ProductGrade, PriceTrend, UserRole } from '@prisma/client';
+import { PrismaClient, DeviceCategory, Brand, ProductGrade, ProductStatus, PriceTrend, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -270,7 +270,7 @@ async function main() {
 
   await prisma.product.upsert({
     where: { imei: '352918114359485' },
-    update: {},
+    update: { status: ProductStatus.AVAILABLE },
     create: {
       categoryId: smartphoneCategory.id,
       modelId: iphone15Pro.id,
@@ -289,7 +289,7 @@ async function main() {
 
   await prisma.product.upsert({
     where: { imei: '352918114359486' },
-    update: {},
+    update: { status: ProductStatus.AVAILABLE },
     create: {
       categoryId: smartphoneCategory.id,
       modelId: iphone15Pro.id,
@@ -307,7 +307,7 @@ async function main() {
 
   await prisma.product.upsert({
     where: { imei: '352918114359487' },
-    update: {},
+    update: { status: ProductStatus.AVAILABLE },
     create: {
       categoryId: smartphoneCategory.id,
       modelId: galaxyS24Ultra.id,
