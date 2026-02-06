@@ -43,6 +43,11 @@ async function bootstrap() {
     .addTag('sell-requests', '판매 접수')
     .addTag('reviews', '리뷰')
     .addTag('prices', '시세')
+    .addTag('admin-dashboard', '관리자 대시보드')
+    .addTag('admin-products', '관리자 상품 관리')
+    .addTag('admin-orders', '관리자 주문 관리')
+    .addTag('admin-sell-requests', '관리자 판매접수 관리')
+    .addTag('admin-users', '관리자 회원 관리')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
