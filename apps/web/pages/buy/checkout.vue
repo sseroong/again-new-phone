@@ -91,6 +91,8 @@ const handlePayment = async () => {
   isProcessing.value = true;
   errorMessage.value = '';
 
+  let createdOrderId = '';
+
   try {
     // 1. 주문 생성
     const body: Record<string, any> = {
@@ -111,6 +113,9 @@ const handlePayment = async () => {
       body,
     });
 
+    createdOrderId = order.id;
+
+    // 2. Toss Payment Widget 호출
     const payment = tossPayments(tossClientKey);
     const widget = payment.widgets({ customerKey: authStore.user?.id || 'ANONYMOUS' });
 
@@ -128,6 +133,18 @@ const handlePayment = async () => {
       customerMobilePhone: shippingForm.shippingPhone.replace(/-/g, ''),
     });
   } catch (e: any) {
+    // 결제 실패 시 생성된 주문 취소 (상품 상태 AVAILABLE 복원)
+    if (createdOrderId) {
+      try {
+        await $fetch(`${apiBase}/orders/${createdOrderId}`, {
+          method: 'DELETE',
+          headers: authHeaders.value,
+        });
+      } catch {
+        // 취소 실패는 무시
+      }
+    }
+
     if (e?.code === 'USER_CANCEL') {
       errorMessage.value = '';
     } else {
