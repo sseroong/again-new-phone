@@ -6,39 +6,50 @@ const toast = useToast();
 const router = useRouter();
 const apiFetch = useAdminFetch();
 
+// 카테고리/모델/바리언트 목록 로드
+const { data: categories } = useAdminApi<any[]>('/products/categories');
+const { data: allModels } = useAdminApi<any[]>('/products/models');
+
+const selectedCategoryId = ref('');
+const selectedModelId = ref('');
+const selectedVariantId = ref('');
+
+const filteredModels = computed(() => {
+  const models = allModels.value || [];
+  if (!selectedCategoryId.value) return models;
+  return models.filter((m: any) => m.categoryId === selectedCategoryId.value);
+});
+
+const selectedModel = computed(() => {
+  return (allModels.value || []).find((m: any) => m.id === selectedModelId.value);
+});
+
+const variants = computed(() => {
+  return selectedModel.value?.variants || [];
+});
+
+watch(selectedCategoryId, () => {
+  selectedModelId.value = '';
+  selectedVariantId.value = '';
+});
+
+watch(selectedModelId, () => {
+  selectedVariantId.value = '';
+});
+
 const form = reactive({
-  title: '',
-  description: '',
-  category: 'SMARTPHONE',
-  brand: 'APPLE',
   grade: 'S',
-  status: 'AVAILABLE',
-  originalPrice: 0,
   sellingPrice: 0,
-  stock: 1,
-  images: [] as string[],
   batteryHealth: 100,
-  warrantyExpiry: '',
+  imei: '',
+  serialNumber: '',
+  description: '',
+  images: [] as string[],
+  discountRate: 0,
 });
 
 const imageUrl = ref('');
 const isSubmitting = ref(false);
-
-const categoryOptions = [
-  { label: '스마트폰', value: 'SMARTPHONE' },
-  { label: '태블릿', value: 'TABLET' },
-  { label: '스마트워치', value: 'WATCH' },
-  { label: '노트북', value: 'LAPTOP' },
-  { label: '무선이어폰', value: 'EARPHONE' },
-];
-
-const brandOptions = [
-  { label: '애플', value: 'APPLE' },
-  { label: '삼성', value: 'SAMSUNG' },
-  { label: 'LG', value: 'LG' },
-  { label: '레노버', value: 'LENOVO' },
-  { label: '기타', value: 'OTHER' },
-];
 
 const gradeOptions = [
   { label: '새상품(NEW)', value: 'NEW' },
@@ -65,8 +76,12 @@ function removeImage(index: number) {
 }
 
 async function handleSubmit() {
-  if (!form.title || !form.sellingPrice) {
-    toast.add({ title: '필수 항목을 입력해주세요.', color: 'red' });
+  if (!selectedCategoryId.value || !selectedModelId.value || !selectedVariantId.value) {
+    toast.add({ title: '카테고리, 모델, 바리언트를 선택해주세요.', color: 'red' });
+    return;
+  }
+  if (!form.sellingPrice) {
+    toast.add({ title: '판매가를 입력해주세요.', color: 'red' });
     return;
   }
 
@@ -74,7 +89,19 @@ async function handleSubmit() {
   try {
     await apiFetch('/admin/products', {
       method: 'POST',
-      body: form,
+      body: {
+        categoryId: selectedCategoryId.value,
+        modelId: selectedModelId.value,
+        variantId: selectedVariantId.value,
+        grade: form.grade,
+        sellingPrice: form.sellingPrice,
+        batteryHealth: form.batteryHealth,
+        imei: form.imei || undefined,
+        serialNumber: form.serialNumber || undefined,
+        description: form.description || undefined,
+        images: form.images.length ? form.images : undefined,
+        discountRate: form.discountRate || undefined,
+      },
     });
     toast.add({ title: '상품이 등록되었습니다.', color: 'green' });
     router.push('/products');
@@ -94,55 +121,73 @@ async function handleSubmit() {
     </div>
 
     <form @submit.prevent="handleSubmit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 max-w-3xl">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <UFormGroup label="상품명" required class="md:col-span-2">
-          <UInput v-model="form.title" placeholder="iPhone 15 Pro Max 256GB" />
-        </UFormGroup>
+      <!-- 기기 선택 -->
+      <div>
+        <h2 class="text-lg font-semibold mb-4">기기 선택</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <UFormGroup label="카테고리" required>
+            <USelect
+              v-model="selectedCategoryId"
+              :options="[{ label: '선택하세요', value: '' }, ...(categories || []).map((c: any) => ({ label: c.name, value: c.id }))]"
+              value-attribute="value"
+              option-attribute="label"
+            />
+          </UFormGroup>
 
-        <UFormGroup label="카테고리" required>
-          <USelect v-model="form.category" :options="categoryOptions" value-attribute="value" option-attribute="label" />
-        </UFormGroup>
+          <UFormGroup label="모델" required>
+            <USelect
+              v-model="selectedModelId"
+              :disabled="!selectedCategoryId"
+              :options="[{ label: '선택하세요', value: '' }, ...filteredModels.map((m: any) => ({ label: `${m.brand} ${m.name}`, value: m.id }))]"
+              value-attribute="value"
+              option-attribute="label"
+            />
+          </UFormGroup>
 
-        <UFormGroup label="브랜드" required>
-          <USelect v-model="form.brand" :options="brandOptions" value-attribute="value" option-attribute="label" />
-        </UFormGroup>
+          <UFormGroup label="바리언트" required>
+            <USelect
+              v-model="selectedVariantId"
+              :disabled="!selectedModelId"
+              :options="[{ label: '선택하세요', value: '' }, ...variants.map((v: any) => ({ label: `${v.storage} ${v.color}`, value: v.id }))]"
+              value-attribute="value"
+              option-attribute="label"
+            />
+          </UFormGroup>
+        </div>
+      </div>
 
-        <UFormGroup label="등급" required>
-          <USelect v-model="form.grade" :options="gradeOptions" value-attribute="value" option-attribute="label" />
-        </UFormGroup>
+      <!-- 상품 정보 -->
+      <div>
+        <h2 class="text-lg font-semibold mb-4">상품 정보</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <UFormGroup label="등급" required>
+            <USelect v-model="form.grade" :options="gradeOptions" value-attribute="value" option-attribute="label" />
+          </UFormGroup>
 
-        <UFormGroup label="상태">
-          <USelect
-            v-model="form.status"
-            :options="[
-              { label: '판매중', value: 'AVAILABLE' },
-              { label: '예약중', value: 'RESERVED' },
-              { label: '비활성', value: 'UNAVAILABLE' },
-            ]"
-            value-attribute="value"
-            option-attribute="label"
-          />
-        </UFormGroup>
+          <UFormGroup label="판매가 (원)" required>
+            <UInput v-model.number="form.sellingPrice" type="number" placeholder="0" />
+          </UFormGroup>
 
-        <UFormGroup label="정가 (원)">
-          <UInput v-model.number="form.originalPrice" type="number" placeholder="0" />
-        </UFormGroup>
+          <UFormGroup label="배터리 건강도 (%)">
+            <UInput v-model.number="form.batteryHealth" type="number" min="0" max="100" />
+          </UFormGroup>
 
-        <UFormGroup label="판매가 (원)" required>
-          <UInput v-model.number="form.sellingPrice" type="number" placeholder="0" />
-        </UFormGroup>
+          <UFormGroup label="할인율 (%)">
+            <UInput v-model.number="form.discountRate" type="number" min="0" max="100" />
+          </UFormGroup>
 
-        <UFormGroup label="재고">
-          <UInput v-model.number="form.stock" type="number" min="0" />
-        </UFormGroup>
+          <UFormGroup label="IMEI">
+            <UInput v-model="form.imei" placeholder="IMEI 번호" />
+          </UFormGroup>
 
-        <UFormGroup label="배터리 건강도 (%)">
-          <UInput v-model.number="form.batteryHealth" type="number" min="0" max="100" />
-        </UFormGroup>
+          <UFormGroup label="시리얼 번호">
+            <UInput v-model="form.serialNumber" placeholder="시리얼 번호" />
+          </UFormGroup>
 
-        <UFormGroup label="설명" class="md:col-span-2">
-          <UTextarea v-model="form.description" rows="4" placeholder="상품 설명을 입력하세요" />
-        </UFormGroup>
+          <UFormGroup label="설명" class="md:col-span-2">
+            <UTextarea v-model="form.description" rows="4" placeholder="상품 설명을 입력하세요" />
+          </UFormGroup>
+        </div>
       </div>
 
       <!-- 이미지 URL -->

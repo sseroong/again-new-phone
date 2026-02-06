@@ -68,10 +68,17 @@ watch([status, category], () => {
   refresh();
 });
 
+function productName(row: any) {
+  const model = row.model?.name || '';
+  const storage = row.variant?.storage || '';
+  const color = row.variant?.color || '';
+  return [model, storage, color].filter(Boolean).join(' ') || '-';
+}
+
 const columns = [
   { key: 'id', label: 'ID', class: 'w-12' },
-  { key: 'title', label: '상품명' },
-  { key: 'category', label: '카테고리' },
+  { key: 'productName', label: '상품명' },
+  { key: 'categoryName', label: '카테고리' },
   { key: 'grade', label: '등급' },
   { key: 'sellingPrice', label: '가격', class: 'text-right' },
   { key: 'status', label: '상태' },
@@ -108,13 +115,13 @@ const columns = [
     <!-- 테이블 -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
       <UTable :columns="columns" :rows="data?.data || []" :loading="pending">
-        <template #title-data="{ row }">
+        <template #productName-data="{ row }">
           <NuxtLink :to="`/products/${row.id}`" class="text-sm font-medium text-primary-600 hover:underline">
-            {{ row.title }}
+            {{ productName(row) }}
           </NuxtLink>
         </template>
-        <template #category-data="{ row }">
-          <span class="text-sm text-gray-600">{{ row.category }}</span>
+        <template #categoryName-data="{ row }">
+          <span class="text-sm text-gray-600">{{ row.category?.name || '-' }}</span>
         </template>
         <template #grade-data="{ row }">
           <UBadge variant="subtle" size="xs">{{ row.grade }}</UBadge>
