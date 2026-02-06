@@ -13,8 +13,9 @@
   },
   "dependencies": {
     "@nuxt/ui": "^2.13.0",
-    "@pinia/nuxt": "^0.5.1",
     "@phone-marketplace/shared": "workspace:*",
+    "@pinia/nuxt": "^0.5.1",
+    "@tosspayments/payment-widget-sdk": "^0.12.1",
     "@vueuse/nuxt": "^10.7.0",
     "nuxt": "^3.9.0",
     "pinia": "^2.1.7",

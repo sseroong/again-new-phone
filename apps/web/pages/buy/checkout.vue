@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { loadPaymentWidget, ANONYMOUS } from '@tosspayments/payment-widget-sdk';
+
 definePageMeta({
   layout: 'default',
   middleware: ['auth'],
@@ -6,9 +8,6 @@ definePageMeta({
 
 useHead({
   title: '주문서 작성',
-  script: [
-    { src: 'https://js.tosspayments.com/v2/standard' },
-  ],
 });
 
 const route = useRoute();
@@ -68,10 +67,44 @@ watchEffect(() => {
   }
 });
 
-// 주문 & 결제
+// 결제 위젯 상태
+const paymentWidget = ref<any>(null);
+const widgetReady = ref(false);
 const isProcessing = ref(false);
 const errorMessage = ref('');
 
+// 결제 위젯 초기화 (클라이언트 사이드에서만)
+onMounted(async () => {
+  if (!product.value) return;
+
+  try {
+    const customerKey = authStore.user?.id || ANONYMOUS;
+    const widget = await loadPaymentWidget(tossClientKey, customerKey);
+    paymentWidget.value = widget;
+
+    const amount = product.value.sellingPrice || 0;
+
+    // 결제 수단 UI 렌더링
+    const paymentMethodWidget = widget.renderPaymentMethods(
+      '#payment-method',
+      { value: amount },
+      { variantKey: 'DEFAULT' },
+    );
+
+    // 약관 동의 UI 렌더링
+    widget.renderAgreement('#agreement', { variantKey: 'AGREEMENT' });
+
+    // 위젯 로딩 완료 이벤트
+    paymentMethodWidget.on('ready', () => {
+      widgetReady.value = true;
+    });
+  } catch (e: any) {
+    console.error('결제 위젯 초기화 실패:', e);
+    errorMessage.value = '결제 모듈을 불러올 수 없습니다. 페이지를 새로고침해주세요.';
+  }
+});
+
+// 주문 & 결제
 const handlePayment = async () => {
   // 폼 검증
   if (!shippingForm.shippingName || !shippingForm.shippingPhone ||
@@ -81,10 +114,8 @@ const handlePayment = async () => {
     return;
   }
 
-  // 결제 모듈 사전 확인 (주문 생성 전에 체크)
-  const tossPayments = (window as any).TossPayments;
-  if (!tossPayments) {
-    errorMessage.value = '결제 모듈을 불러올 수 없습니다. 페이지를 새로고침해주세요.';
+  if (!paymentWidget.value) {
+    errorMessage.value = '결제 모듈이 준비되지 않았습니다. 페이지를 새로고침해주세요.';
     return;
   }
 
@@ -115,19 +146,16 @@ const handlePayment = async () => {
 
     createdOrderId = order.id;
 
-    // 2. Toss Payment Widget 호출
-    const payment = tossPayments(tossClientKey);
-    const widget = payment.widgets({ customerKey: authStore.user?.id || 'ANONYMOUS' });
+    // 2. 결제 요청 (위젯에서 선택한 결제 수단으로 진행)
+    const orderName = product.value?.model?.name
+      ? `${product.value.model.name} ${product.value.variant?.storage || ''}`
+      : '상품 구매';
 
-    await widget.setAmount({ currency: 'KRW', value: order.totalAmount });
-
-    await widget.requestPayment({
+    await paymentWidget.value.requestPayment({
       orderId: order.orderNumber,
-      orderName: product.value?.model?.name
-        ? `${product.value.model.name} ${product.value.variant?.storage || ''}`
-        : '상품 구매',
+      orderName,
       successUrl: `${window.location.origin}/buy/payment/success`,
-      failUrl: `${window.location.origin}/buy/payment/fail?orderId=${order.orderNumber}`,
+      failUrl: `${window.location.origin}/buy/payment/fail?orderId=${order.id}`,
       customerEmail: authStore.user?.email,
       customerName: shippingForm.shippingName,
       customerMobilePhone: shippingForm.shippingPhone.replace(/-/g, ''),
@@ -165,9 +193,9 @@ const handlePayment = async () => {
         <h1 class="text-2xl font-bold">주문서 작성</h1>
         <nav class="flex items-center gap-2 mt-2 text-sm text-gray-500">
           <NuxtLink to="/" class="hover:text-gray-700">HOME</NuxtLink>
-          <span>›</span>
+          <span>&rsaquo;</span>
           <NuxtLink to="/buy" class="hover:text-gray-700">구매하기</NuxtLink>
-          <span>›</span>
+          <span>&rsaquo;</span>
           <span class="text-gray-900">주문서 작성</span>
         </nav>
       </div>
@@ -257,6 +285,21 @@ const handlePayment = async () => {
         </div>
       </div>
 
+      <!-- 결제 수단 선택 (토스페이먼츠 위젯) -->
+      <div class="bg-white rounded-xl p-6">
+        <h2 class="text-lg font-bold mb-4">결제 수단</h2>
+        <div id="payment-method" />
+        <div v-if="!widgetReady" class="flex items-center justify-center py-8">
+          <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-gray-400 animate-spin" />
+          <span class="ml-2 text-sm text-gray-500">결제 수단을 불러오는 중...</span>
+        </div>
+      </div>
+
+      <!-- 약관 동의 (토스페이먼츠 위젯) -->
+      <div class="bg-white rounded-xl p-6">
+        <div id="agreement" />
+      </div>
+
       <!-- 결제 요약 -->
       <div class="bg-white rounded-xl p-6">
         <h2 class="text-lg font-bold mb-4">결제 금액</h2>
@@ -283,6 +326,7 @@ const handlePayment = async () => {
         block
         size="xl"
         :loading="isProcessing"
+        :disabled="!widgetReady"
         @click="handlePayment"
       >
         {{ product.sellingPrice?.toLocaleString() }}원 결제하기

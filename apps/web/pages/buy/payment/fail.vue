@@ -6,10 +6,33 @@ definePageMeta({
 useHead({ title: '결제 실패' });
 
 const route = useRoute();
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBaseUrl as string;
+const authStore = useAuthStore();
 
 const errorCode = route.query.code as string;
 const errorMessage = route.query.message as string;
 const orderId = route.query.orderId as string;
+
+// 결제 실패 시 주문 자동 취소 (상품 AVAILABLE 복원)
+const cancelAttempted = ref(false);
+
+onMounted(async () => {
+  if (orderId && authStore.tokens?.accessToken) {
+    try {
+      await $fetch(`${apiBase}/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${authStore.tokens.accessToken}`,
+        },
+      });
+    } catch {
+      // 취소 실패는 무시 (이미 취소되었거나 권한 없음)
+    } finally {
+      cancelAttempted.value = true;
+    }
+  }
+});
 </script>
 
 <template>
@@ -24,16 +47,11 @@ const orderId = route.query.orderId as string;
       <p v-else class="mb-8" />
 
       <div class="flex flex-col gap-3">
-        <UButton
-          v-if="orderId"
-          :to="`/buy/checkout?productId=${orderId}`"
-          block
-          size="lg"
-        >
-          다시 결제하기
-        </UButton>
-        <UButton to="/buy" variant="outline" block size="lg">
+        <UButton to="/buy" block size="lg">
           구매 목록으로 돌아가기
+        </UButton>
+        <UButton to="/mypage/orders" variant="outline" block size="lg">
+          거래내역 확인
         </UButton>
       </div>
     </div>
