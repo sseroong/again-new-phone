@@ -12,6 +12,18 @@ const navItems = [
   { label: '내 기기 관리', to: '/my/devices', icon: 'i-heroicons-device-phone-mobile' },
 ];
 
+// 사용자 메뉴 항목
+const userMenuItems = [
+  [
+    { label: '나의 거래내역', to: '/my/transactions', icon: 'i-heroicons-document-text' },
+    { label: '내 기기 관리', to: '/my/devices', icon: 'i-heroicons-device-phone-mobile' },
+  ],
+  [
+    { label: '프로필 수정', to: '/my/profile', icon: 'i-heroicons-user-circle' },
+    { label: '배송지 관리', to: '/my/addresses', icon: 'i-heroicons-map-pin' },
+  ],
+];
+
 // 더보기 메뉴 항목
 const moreMenuItems = [
   [
@@ -52,12 +64,11 @@ const isActiveTab = (to: string) => {
           <!-- Right Actions -->
           <div class="flex items-center gap-4">
             <template v-if="authStore.isAuthenticated">
-              <NuxtLink
-                to="/my/transactions"
-                class="text-sm text-gray-600 hover:text-gray-900 font-medium"
-              >
-                {{ authStore.user?.name }}님
-              </NuxtLink>
+              <UDropdown :items="userMenuItems" :popper="{ placement: 'bottom-end' }">
+                <button class="text-sm text-gray-600 hover:text-gray-900 font-medium">
+                  {{ authStore.user?.name }}님
+                </button>
+              </UDropdown>
               <button
                 @click="authStore.logout().then(() => navigateTo('/'))"
                 class="text-sm text-gray-500 hover:text-gray-700"
