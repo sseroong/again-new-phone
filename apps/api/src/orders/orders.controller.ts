@@ -16,7 +16,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto, OrderQueryDto } from './dto';
+import { CreateOrderDto, OrderQueryDto, ConfirmPaymentDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -77,17 +77,10 @@ export class OrdersController {
   // 결제 확인 (토스페이먼츠 콜백)
   @Public()
   @Post('confirm')
-  @ApiOperation({ summary: '결제 확인' })
+  @ApiOperation({ summary: '결제 확인 (토스페이먼츠)' })
   @ApiResponse({ status: 200, description: '결제 확인 성공' })
-  async confirmPayment(
-    @Body() body: { orderNumber: string; paymentKey: string; amount: number },
-  ) {
-    // 토스페이먼츠 결제 확인 API 호출 로직 추가 필요
-    // 여기서는 간단히 결제 정보만 저장
-    return this.ordersService.confirmPayment(body.orderNumber, {
-      paymentKey: body.paymentKey,
-      amount: body.amount,
-      method: 'CARD',
-    });
+  @ApiResponse({ status: 400, description: '결제 승인 실패' })
+  async confirmPayment(@Body() dto: ConfirmPaymentDto) {
+    return this.ordersService.confirmPayment(dto);
   }
 }

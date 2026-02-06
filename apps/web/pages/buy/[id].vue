@@ -28,35 +28,14 @@ useHead({
   title: product.value ? `${product.value.model?.name}` : '상품 상세',
 });
 
-// 주문하기
-const isOrdering = ref(false);
+// 구매하기 → 체크아웃 페이지로 이동
 const orderError = ref('');
 
-const handleOrder = async () => {
+const handleOrder = () => {
   if (!authStore.isAuthenticated) {
     return navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`);
   }
-
-  isOrdering.value = true;
-  orderError.value = '';
-
-  try {
-    const order = await $fetch<any>(`${apiBase}/orders`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${authStore.tokens?.accessToken}`,
-      },
-      body: {
-        productId: productId,
-      },
-    });
-
-    navigateTo(`/my/transactions?orderId=${order.id}`);
-  } catch (e: any) {
-    orderError.value = e?.data?.message || '주문에 실패했습니다.';
-  } finally {
-    isOrdering.value = false;
-  }
+  navigateTo(`/buy/checkout?productId=${productId}`);
 };
 
 const gradeInfo = computed(() => {
@@ -184,7 +163,6 @@ const gradeInfo = computed(() => {
               <UButton
                 size="lg"
                 class="flex-1"
-                :loading="isOrdering"
                 :disabled="product.status !== 'AVAILABLE'"
                 @click="handleOrder"
               >

@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     // 클라이언트에서도 사용 가능
     public: {
       apiBaseUrl: process.env.API_URL || 'http://localhost:3001/api',
+      tossClientKey: process.env.TOSS_CLIENT_KEY || process.env.NUXT_PUBLIC_TOSS_CLIENT_KEY || 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm',
       siteName: '폰마켓',
       siteDescription: '중고 전자기기 거래 플랫폼',
     },
