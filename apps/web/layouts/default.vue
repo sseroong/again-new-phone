@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const route = useRoute();
+const authStore = useAuthStore();
 
 // 네비게이션 메뉴 항목
 const navItems = [
@@ -50,19 +51,35 @@ const isActiveTab = (to: string) => {
 
           <!-- Right Actions -->
           <div class="flex items-center gap-4">
-            <NuxtLink
-              to="/auth/login"
-              class="text-sm text-gray-600 hover:text-gray-900"
-            >
-              로그인
-            </NuxtLink>
-            <span class="text-gray-300">·</span>
-            <NuxtLink
-              to="/auth/register"
-              class="text-sm text-gray-600 hover:text-gray-900"
-            >
-              회원가입
-            </NuxtLink>
+            <template v-if="authStore.isAuthenticated">
+              <NuxtLink
+                to="/my/transactions"
+                class="text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                {{ authStore.user?.name }}님
+              </NuxtLink>
+              <button
+                @click="authStore.logout().then(() => navigateTo('/'))"
+                class="text-sm text-gray-500 hover:text-gray-700"
+              >
+                로그아웃
+              </button>
+            </template>
+            <template v-else>
+              <NuxtLink
+                to="/auth/login"
+                class="text-sm text-gray-600 hover:text-gray-900"
+              >
+                로그인
+              </NuxtLink>
+              <span class="text-gray-300">·</span>
+              <NuxtLink
+                to="/auth/register"
+                class="text-sm text-gray-600 hover:text-gray-900"
+              >
+                회원가입
+              </NuxtLink>
+            </template>
             <UDropdown :items="moreMenuItems" :popper="{ placement: 'bottom-end' }">
               <UButton
                 variant="ghost"

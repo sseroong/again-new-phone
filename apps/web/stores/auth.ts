@@ -40,7 +40,7 @@ export const useAuthStore = defineStore('auth', {
       this.isLoading = true;
       try {
         const config = useRuntimeConfig();
-        const response = await $fetch<{ user: User; tokens: AuthTokens }>(
+        const response = await $fetch<{ user: User; accessToken: string; refreshToken: string }>(
           `${config.public.apiBaseUrl}/auth/login`,
           {
             method: 'POST',
@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', {
         );
 
         this.setUser(response.user);
-        this.setTokens(response.tokens);
+        this.setTokens({ accessToken: response.accessToken, refreshToken: response.refreshToken });
 
         return response;
       } finally {
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', {
       this.isLoading = true;
       try {
         const config = useRuntimeConfig();
-        const response = await $fetch<{ user: User; tokens: AuthTokens }>(
+        const response = await $fetch<{ user: User; accessToken: string; refreshToken: string }>(
           `${config.public.apiBaseUrl}/auth/register`,
           {
             method: 'POST',
@@ -70,7 +70,7 @@ export const useAuthStore = defineStore('auth', {
         );
 
         this.setUser(response.user);
-        this.setTokens(response.tokens);
+        this.setTokens({ accessToken: response.accessToken, refreshToken: response.refreshToken });
 
         return response;
       } finally {
