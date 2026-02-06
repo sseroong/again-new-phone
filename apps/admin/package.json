@@ -1,0 +1,29 @@
+{
+  "name": "@phone-marketplace/admin",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --port 3002",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^2.13.0",
+    "@phone-marketplace/shared": "workspace:*",
+    "@pinia/nuxt": "^0.5.1",
+    "@vueuse/nuxt": "^10.7.0",
+    "nuxt": "^3.9.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@nuxtjs/tailwindcss": "^6.10.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
