@@ -2,14 +2,21 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, OrderStatus, ProductStatus, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderDto, OrderQueryDto } from './dto';
+import { CreateOrderDto, OrderQueryDto, ConfirmPaymentDto } from './dto';
 
 @Injectable()
 export class OrdersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(OrdersService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   async create(userId: string, dto: CreateOrderDto) {
     // 상품 조회 및 검증
@@ -225,7 +232,9 @@ export class OrdersService {
     return { message: '주문이 취소되었습니다.' };
   }
 
-  async confirmPayment(orderNumber: string, paymentData: any) {
+  async confirmPayment(dto: ConfirmPaymentDto) {
+    const { paymentKey, orderId: orderNumber, amount } = dto;
+
     const order = await this.prisma.order.findUnique({
       where: { orderNumber },
       include: { payment: true },
@@ -239,31 +248,63 @@ export class OrdersService {
       throw new BadRequestException('결제 대기 상태가 아닙니다.');
     }
 
+    // 금액 검증
+    if (order.totalAmount !== amount) {
+      throw new BadRequestException('결제 금액이 일치하지 않습니다.');
+    }
+
+    // 토스페이먼츠 결제 승인 API 호출
+    const tossSecretKey = this.configService.get<string>('TOSS_SECRET_KEY');
+    const encodedKey = Buffer.from(`${tossSecretKey}:`).toString('base64');
+
+    let tossResponse: any;
+    try {
+      const response = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${encodedKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paymentKey, orderId: orderNumber, amount }),
+      });
+
+      tossResponse = await response.json();
+
+      if (!response.ok) {
+        this.logger.error(`토스 결제 승인 실패: ${JSON.stringify(tossResponse)}`);
+        throw new BadRequestException(
+          tossResponse.message || '결제 승인에 실패했습니다.',
+        );
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      this.logger.error(`토스 API 호출 오류: ${error}`);
+      throw new BadRequestException('결제 승인 중 오류가 발생했습니다.');
+    }
+
     // 트랜잭션으로 결제 확정
     await this.prisma.executeInTransaction(async (tx) => {
       // 결제 정보 생성/업데이트
+      const paymentData = {
+        status: PaymentStatus.COMPLETED,
+        transactionId: paymentKey,
+        pgProvider: 'TOSS',
+        pgResponse: tossResponse as any,
+        paidAt: new Date(),
+      };
+
       if (order.payment) {
         await tx.payment.update({
           where: { id: order.payment.id },
-          data: {
-            status: PaymentStatus.COMPLETED,
-            transactionId: paymentData.paymentKey,
-            pgProvider: 'TOSS',
-            pgResponse: paymentData,
-            paidAt: new Date(),
-          },
+          data: paymentData,
         });
       } else {
         await tx.payment.create({
           data: {
             orderId: order.id,
-            method: paymentData.method || 'CARD',
-            status: PaymentStatus.COMPLETED,
+            method: (tossResponse.method === '카드' ? 'CARD' : 'BANK_TRANSFER') as any,
             amount: order.totalAmount,
-            transactionId: paymentData.paymentKey,
-            pgProvider: 'TOSS',
-            pgResponse: paymentData,
-            paidAt: new Date(),
+            ...paymentData,
           },
         });
       }
@@ -289,7 +330,7 @@ export class OrdersService {
       });
     });
 
-    return { message: '결제가 완료되었습니다.' };
+    return { message: '결제가 완료되었습니다.', orderNumber };
   }
 
   private generateOrderNumber(): string {

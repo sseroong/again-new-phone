@@ -123,12 +123,12 @@ const getStatus = (status: string) => statusLabels[status] || { label: status, c
               </div>
               <div class="flex-1">
                 <p class="font-medium">
-                  {{ order.items?.[0]?.product?.brand }} {{ order.items?.[0]?.product?.model }}
+                  {{ order.items?.[0]?.product?.model?.name }}
                   <span v-if="order.items?.length > 1" class="text-gray-500">
                     외 {{ order.items.length - 1 }}건
                   </span>
                 </p>
-                <p class="text-sm text-gray-500">{{ order.items?.[0]?.product?.variant }}</p>
+                <p class="text-sm text-gray-500">{{ order.items?.[0]?.product?.variant?.storage }} · {{ order.items?.[0]?.product?.variant?.color }}</p>
               </div>
               <p class="font-bold text-lg">{{ order.totalAmount?.toLocaleString() }}원</p>
             </div>
@@ -171,7 +171,7 @@ const getStatus = (status: string) => statusLabels[status] || { label: status, c
                 <UIcon name="i-heroicons-device-phone-mobile" class="w-8 h-8 text-gray-300" />
               </div>
               <div class="flex-1">
-                <p class="font-medium">{{ sell.model }} {{ sell.variant }}</p>
+                <p class="font-medium">{{ sell.modelName }} {{ sell.storage }}</p>
                 <p class="text-sm text-gray-500">{{ sell.brand }} · {{ sell.selfGrade }}등급</p>
               </div>
               <div class="text-right">
