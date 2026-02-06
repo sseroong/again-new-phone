@@ -8,6 +8,7 @@ import { OrdersModule } from './orders/orders.module';
 import { SellRequestsModule } from './sell-requests/sell-requests.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { PricesModule } from './prices/prices.module';
+import { AdminModule } from './admin/admin.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
@@ -30,6 +31,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     SellRequestsModule,
     ReviewsModule,
     PricesModule,
+    AdminModule,
   ],
   providers: [
     // 전역 JWT 인증 가드
