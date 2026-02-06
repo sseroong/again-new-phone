@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 커스텀 폰트 */
+@layer base {
+  html {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+}
+
+/* 커스텀 스타일 */
+@layer components {
+  /* 상품 카드 */
+  .product-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-shadow hover:shadow-md;
+  }
+
+  /* 등급 배지 */
+  .grade-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold;
+  }
+
+  /* 가격 태그 */
+  .price-tag {
+    @apply text-lg font-bold text-primary-600;
+  }
+
+  .price-original {
+    @apply text-sm text-gray-400 line-through;
+  }
+
+  .discount-rate {
+    @apply text-sm font-semibold text-red-500;
+  }
+
+  /* 신뢰 배지 */
+  .trust-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .trust-badge-quality {
+    @apply bg-blue-100 text-blue-700;
+  }
+
+  .trust-badge-verified {
+    @apply bg-green-100 text-green-700;
+  }
+}
+
+/* 유틸리티 */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* 스크롤바 숨기기 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

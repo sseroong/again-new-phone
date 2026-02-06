@@ -1,0 +1,40 @@
+{
+  "name": "phone-marketplace",
+  "version": "0.0.1",
+  "private": true,
+  "description": "중고 전자기기 거래 플랫폼 - 폰가비 클론",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "dev:web": "pnpm --filter @phone-marketplace/web dev",
+    "dev:api": "pnpm --filter @phone-marketplace/api dev",
+    "dev:admin": "pnpm --filter @phone-marketplace/admin dev",
+    "build": "pnpm --parallel -r build",
+    "build:web": "pnpm --filter @phone-marketplace/web build",
+    "build:api": "pnpm --filter @phone-marketplace/api build",
+    "lint": "pnpm --parallel -r lint",
+    "test": "pnpm --parallel -r test",
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema prisma/schema.prisma",
+    "db:studio": "prisma studio --schema prisma/schema.prisma",
+    "db:seed": "ts-node prisma/seed.ts",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.8.0",
+    "bcrypt": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/bcrypt": "^5.0.2",
+    "prisma": "^5.8.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

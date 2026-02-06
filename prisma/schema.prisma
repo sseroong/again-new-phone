@@ -1,0 +1,428 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// 사용자 관련
+// =============================================
+
+enum UserRole {
+  USER
+  PARTNER
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  role          UserRole  @default(USER)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  addresses     Address[]
+  orders        Order[]
+  sellRequests  SellRequest[]
+  reviews       Review[]
+  refreshTokens RefreshToken[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Address {
+  id            String  @id @default(cuid())
+  userId        String
+  name          String
+  phone         String
+  zipCode       String
+  address       String
+  addressDetail String
+  isDefault     Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// =============================================
+// 상품 관련
+// =============================================
+
+enum DeviceCategory {
+  SMARTPHONE
+  TABLET
+  WATCH
+  LAPTOP
+  EARPHONE
+}
+
+enum Brand {
+  APPLE
+  SAMSUNG
+  LG
+  LENOVO
+  OTHER
+}
+
+enum ProductGrade {
+  NEW
+  UNOPENED
+  S_PLUS
+  S
+  A
+  B_PLUS
+  B
+  C
+  D
+  E
+}
+
+enum ProductStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  UNAVAILABLE
+}
+
+model Category {
+  id          String         @id @default(cuid())
+  type        DeviceCategory @unique
+  name        String
+  description String?
+  icon        String?
+  sortOrder   Int            @default(0)
+  isActive    Boolean        @default(true)
+
+  products Product[]
+  models   DeviceModel[]
+
+  @@index([type])
+}
+
+model DeviceModel {
+  id           String         @id @default(cuid())
+  categoryId   String
+  brand        Brand
+  name         String         // 예: 아이폰 15 Pro
+  series       String?        // 예: 15 시리즈
+  releaseDate  DateTime?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+
+  category    Category      @relation(fields: [categoryId], references: [id])
+  products    Product[]
+  variants    ModelVariant[]
+  priceGuides PriceGuide[]
+
+  @@unique([brand, name])
+  @@index([categoryId])
+  @@index([brand])
+  @@index([series])
+}
+
+model ModelVariant {
+  id           String @id @default(cuid())
+  modelId      String
+  storage      String // 예: 256GB
+  color        String // 예: 내추럴 티타늄
+  originalMsrp Int?   // 출시가
+
+  model    DeviceModel @relation(fields: [modelId], references: [id])
+  products Product[]
+
+  @@unique([modelId, storage, color])
+  @@index([modelId])
+}
+
+model Product {
+  id              String        @id @default(cuid())
+  categoryId      String
+  modelId         String
+  variantId       String
+  grade           ProductGrade
+  status          ProductStatus @default(AVAILABLE)
+  sellingPrice    Int
+  discountRate    Float?
+  batteryHealth   Int?
+  warrantyExpiry  DateTime?
+  manufactureDate DateTime?
+  imei            String?       @unique
+  serialNumber    String?
+  description     String?
+  specs           Json?
+  images          String[]
+  rating          Float         @default(5.0)
+  reviewCount     Int           @default(0)
+  viewCount       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  category   Category     @relation(fields: [categoryId], references: [id])
+  model      DeviceModel  @relation(fields: [modelId], references: [id])
+  variant    ModelVariant @relation(fields: [variantId], references: [id])
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@index([modelId])
+  @@index([grade])
+  @@index([status])
+  @@index([sellingPrice])
+  @@index([createdAt])
+}
+
+// =============================================
+// 시세 관련
+// =============================================
+
+model PriceGuide {
+  id        String       @id @default(cuid())
+  modelId   String
+  storage   String
+  grade     ProductGrade
+  price     Int
+  trend     PriceTrend   @default(STABLE)
+  updatedAt DateTime     @updatedAt
+
+  model DeviceModel @relation(fields: [modelId], references: [id])
+
+  @@unique([modelId, storage, grade])
+  @@index([modelId])
+}
+
+enum PriceTrend {
+  UP
+  DOWN
+  STABLE
+}
+
+model PriceHistory {
+  id          String       @id @default(cuid())
+  modelId     String
+  storage     String
+  grade       ProductGrade
+  price       Int
+  recordedAt  DateTime     @default(now())
+
+  @@index([modelId, storage, grade])
+  @@index([recordedAt])
+}
+
+// =============================================
+// 판매 접수 관련
+// =============================================
+
+enum SellRequestStatus {
+  PENDING     // 접수 대기
+  QUOTED      // 견적 제안됨
+  ACCEPTED    // 견적 수락
+  SHIPPING    // 배송 중
+  INSPECTING  // 검수 중
+  COMPLETED   // 완료
+  CANCELLED   // 취소됨
+}
+
+enum TradeMethod {
+  COURIER
+  PICKUP
+  VISIT
+}
+
+model SellRequest {
+  id              String            @id @default(cuid())
+  userId          String
+  category        DeviceCategory
+  brand           Brand
+  modelName       String
+  storage         String
+  color           String?
+  selfGrade       ProductGrade
+  finalGrade      ProductGrade?
+  estimatedPrice  Int
+  finalPrice      Int?
+  status          SellRequestStatus @default(PENDING)
+  tradeMethod     TradeMethod
+  deviceCondition Json
+  trackingNumber  String?
+  inspectionNotes String?
+  completedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id])
+  quotes  SellQuote[]
+  reviews Review[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SellQuote {
+  id            String   @id @default(cuid())
+  sellRequestId String
+  partnerId     String?  // 파트너 사업자 ID
+  price         Int
+  notes         String?
+  isAccepted    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  sellRequest SellRequest @relation(fields: [sellRequestId], references: [id])
+
+  @@index([sellRequestId])
+}
+
+// =============================================
+// 주문 관련
+// =============================================
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  SHIPPING
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  VIRTUAL_ACCOUNT
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+model Order {
+  id               String        @id @default(cuid())
+  orderNumber      String        @unique
+  userId           String
+  status           OrderStatus   @default(PENDING_PAYMENT)
+  totalAmount      Int
+  shippingName     String
+  shippingPhone    String
+  shippingZipCode  String
+  shippingAddress  String
+  shippingDetail   String
+  shippingMemo     String?
+  trackingNumber   String?
+  trackingCompany  String?
+  paidAt           DateTime?
+  shippedAt        DateTime?
+  deliveredAt      DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user     User        @relation(fields: [userId], references: [id])
+  items    OrderItem[]
+  payment  Payment?
+  reviews  Review[]
+
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int    @default(1)
+  price     Int
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String        @unique
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  amount        Int
+  transactionId String?
+  pgProvider    String?       // 예: TOSS
+  pgResponse    Json?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([transactionId])
+}
+
+// =============================================
+// 리뷰 관련
+// =============================================
+
+enum ReviewType {
+  SELL
+  BUY
+}
+
+model Review {
+  id             String      @id @default(cuid())
+  userId         String
+  type           ReviewType
+  orderId        String?
+  sellRequestId  String?
+  productModel   String
+  title          String
+  content        String
+  rating         Int         @default(5)
+  likes          Int         @default(0)
+  images         String[]
+  quotesReceived Int?
+  isPublished    Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id])
+  order       Order?       @relation(fields: [orderId], references: [id])
+  sellRequest SellRequest? @relation(fields: [sellRequestId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
