@@ -12,6 +12,11 @@ useHead({
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBaseUrl as string;
 
+function getImageUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  return `${apiBase}${path}`;
+}
+
 // 카테고리 목록
 const categories = Object.entries(DEVICE_CATEGORIES).map(([key, value]) => ({
   key,
@@ -196,8 +201,14 @@ const stats = {
             :to="`/buy/${product.id}`"
             class="product-card p-4"
           >
-            <div class="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-              <UIcon name="i-heroicons-device-phone-mobile" class="w-12 h-12 text-gray-300" />
+            <div class="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+              <img
+                v-if="product.images?.length"
+                :src="getImageUrl(product.images[0])"
+                :alt="product.model?.name"
+                class="w-full h-full object-cover rounded-lg"
+              />
+              <UIcon v-else name="i-heroicons-device-phone-mobile" class="w-12 h-12 text-gray-300" />
             </div>
             <div class="space-y-1">
               <div class="flex gap-1">
