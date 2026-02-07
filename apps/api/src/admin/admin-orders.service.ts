@@ -26,11 +26,11 @@ const VALID_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 export class AdminOrdersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: AdminOrderQueryDto) {
+  async findAll(tenantId: string, query: AdminOrderQueryDto) {
     const { status, userId, search, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.OrderWhereInput = {};
+    const where: Prisma.OrderWhereInput = { tenantId };
 
     if (status) where.status = status;
     if (userId) where.userId = userId;

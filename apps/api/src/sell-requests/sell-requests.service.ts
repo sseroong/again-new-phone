@@ -15,10 +15,11 @@ import {
 export class SellRequestsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, dto: CreateSellRequestDto) {
+  async create(tenantId: string, userId: string, dto: CreateSellRequestDto) {
     return this.prisma.sellRequest.create({
       data: {
         userId,
+        tenantId,
         category: dto.category,
         brand: dto.brand,
         modelName: dto.modelName,
@@ -32,10 +33,10 @@ export class SellRequestsService {
     });
   }
 
-  async findAll(userId: string, query: SellRequestQueryDto) {
+  async findAll(tenantId: string, userId: string, query: SellRequestQueryDto) {
     const { status, page = 1, limit = 10 } = query;
 
-    const where: Prisma.SellRequestWhereInput = { userId };
+    const where: Prisma.SellRequestWhereInput = { tenantId, userId };
 
     if (status) {
       where.status = status;

@@ -12,6 +12,8 @@ describe('AdminOrdersService', () => {
   let service: AdminOrdersService;
   let prisma: MockPrismaService;
 
+  const tenantId = 'default-tenant';
+
   const mockOrder = {
     id: 'order-1',
     orderNumber: 'ORD-20240101-0001',
@@ -79,7 +81,7 @@ describe('AdminOrdersService', () => {
       prisma.order.findMany.mockResolvedValue(orders);
       prisma.order.count.mockResolvedValue(1);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(tenantId, {});
 
       expect(result).toEqual({
         data: orders,
@@ -92,28 +94,28 @@ describe('AdminOrdersService', () => {
       });
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {},
+          where: { tenantId },
           orderBy: { createdAt: 'desc' },
           skip: 0,
           take: 20,
         }),
       );
-      expect(prisma.order.count).toHaveBeenCalledWith({ where: {} });
+      expect(prisma.order.count).toHaveBeenCalledWith({ where: { tenantId } });
     });
 
     it('상태 필터를 적용한다', async () => {
       prisma.order.findMany.mockResolvedValue([]);
       prisma.order.count.mockResolvedValue(0);
 
-      await service.findAll({ status: OrderStatus.PAID });
+      await service.findAll(tenantId, { status: OrderStatus.PAID });
 
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { status: OrderStatus.PAID },
+          where: { tenantId, status: OrderStatus.PAID },
         }),
       );
       expect(prisma.order.count).toHaveBeenCalledWith({
-        where: { status: OrderStatus.PAID },
+        where: { tenantId, status: OrderStatus.PAID },
       });
     });
 
@@ -121,15 +123,15 @@ describe('AdminOrdersService', () => {
       prisma.order.findMany.mockResolvedValue([]);
       prisma.order.count.mockResolvedValue(0);
 
-      await service.findAll({ userId: 'user-1' });
+      await service.findAll(tenantId, { userId: 'user-1' });
 
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId: 'user-1' },
+          where: { tenantId, userId: 'user-1' },
         }),
       );
       expect(prisma.order.count).toHaveBeenCalledWith({
-        where: { userId: 'user-1' },
+        where: { tenantId, userId: 'user-1' },
       });
     });
 
@@ -137,11 +139,12 @@ describe('AdminOrdersService', () => {
       prisma.order.findMany.mockResolvedValue([]);
       prisma.order.count.mockResolvedValue(0);
 
-      await service.findAll({ search: '홍길동' });
+      await service.findAll(tenantId, { search: '홍길동' });
 
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
+            tenantId,
             OR: [
               { orderNumber: { contains: '홍길동', mode: 'insensitive' } },
               { shippingName: { contains: '홍길동', mode: 'insensitive' } },
@@ -155,7 +158,7 @@ describe('AdminOrdersService', () => {
       prisma.order.findMany.mockResolvedValue([]);
       prisma.order.count.mockResolvedValue(50);
 
-      const result = await service.findAll({ page: 3, limit: 10 });
+      const result = await service.findAll(tenantId, { page: 3, limit: 10 });
 
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

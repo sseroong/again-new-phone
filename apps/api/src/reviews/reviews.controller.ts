@@ -19,6 +19,7 @@ import { ReviewsService } from './reviews.service';
 import { CreateReviewDto, ReviewQueryDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentTenant } from '../tenant/tenant.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('reviews')
@@ -30,16 +31,19 @@ export class ReviewsController {
   @Get()
   @ApiOperation({ summary: '리뷰 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: ReviewQueryDto) {
-    return this.reviewsService.findAll(query);
+  async findAll(
+    @CurrentTenant() tenantId: string,
+    @Query() query: ReviewQueryDto,
+  ) {
+    return this.reviewsService.findAll(tenantId, query);
   }
 
   @Public()
   @Get('stats')
   @ApiOperation({ summary: '리뷰 통계' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getStats() {
-    return this.reviewsService.getStats();
+  async getStats(@CurrentTenant() tenantId: string) {
+    return this.reviewsService.getStats(tenantId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -70,10 +74,11 @@ export class ReviewsController {
   @ApiOperation({ summary: '리뷰 작성' })
   @ApiResponse({ status: 201, description: '작성 성공' })
   async create(
+    @CurrentTenant() tenantId: string,
     @CurrentUser('id') userId: string,
     @Body() dto: CreateReviewDto,
   ) {
-    return this.reviewsService.create(userId, dto);
+    return this.reviewsService.create(tenantId, userId, dto);
   }
 
   @Public()

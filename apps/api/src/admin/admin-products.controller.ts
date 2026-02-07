@@ -13,6 +13,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentTenant } from '../tenant/tenant.decorator';
 import { AdminProductsService } from './admin-products.service';
 import {
   AdminProductQueryDto,
@@ -30,8 +31,8 @@ export class AdminProductsController {
 
   @Get()
   @ApiOperation({ summary: '전체 상품 목록 (관리자)' })
-  findAll(@Query() query: AdminProductQueryDto) {
-    return this.productsService.findAll(query);
+  findAll(@CurrentTenant() tenantId: string, @Query() query: AdminProductQueryDto) {
+    return this.productsService.findAll(tenantId, query);
   }
 
   @Get(':id')
@@ -42,8 +43,8 @@ export class AdminProductsController {
 
   @Post()
   @ApiOperation({ summary: '상품 등록' })
-  create(@Body() dto: AdminCreateProductDto) {
-    return this.productsService.create(dto);
+  create(@CurrentTenant() tenantId: string, @Body() dto: AdminCreateProductDto) {
+    return this.productsService.create(tenantId, dto);
   }
 
   @Patch(':id')

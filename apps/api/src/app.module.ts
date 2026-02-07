@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
@@ -11,6 +11,8 @@ import { PricesModule } from './prices/prices.module';
 import { AdminModule } from './admin/admin.module';
 import { UploadModule } from './upload/upload.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { TenantModule } from './tenant/tenant.module';
+import { TenantMiddleware } from './tenant/tenant.middleware';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Module({
@@ -23,6 +25,9 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
     // 데이터베이스
     PrismaModule,
+
+    // 테넌트
+    TenantModule,
 
     // 기능 모듈
     AuthModule,
@@ -43,4 +48,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantMiddleware).forRoutes('*');
+  }
+}

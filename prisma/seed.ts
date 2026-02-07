@@ -3,8 +3,23 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+const DEFAULT_TENANT_ID = 'default-tenant';
+
 async function main() {
   console.log('🌱 Seeding database...');
+
+  // 0. 기본 테넌트 생성
+  console.log('🏢 Creating default tenant...');
+  const defaultTenant = await prisma.tenant.upsert({
+    where: { slug: 'phonegabi' },
+    update: {},
+    create: {
+      id: DEFAULT_TENANT_ID,
+      name: '폰가비',
+      slug: 'phonegabi',
+      settings: {},
+    },
+  });
 
   // 1. 카테고리 생성
   console.log('📦 Creating categories...');
@@ -272,6 +287,7 @@ async function main() {
     where: { imei: '352918114359485' },
     update: { status: ProductStatus.AVAILABLE },
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       categoryId: smartphoneCategory.id,
       modelId: iphone15Pro.id,
       variantId: iPhone15ProVariants[1].id, // 256GB 내추럴 티타늄
@@ -291,6 +307,7 @@ async function main() {
     where: { imei: '352918114359486' },
     update: { status: ProductStatus.AVAILABLE },
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       categoryId: smartphoneCategory.id,
       modelId: iphone15Pro.id,
       variantId: iPhone15ProVariants[3].id, // 256GB 블루 티타늄
@@ -309,6 +326,7 @@ async function main() {
     where: { imei: '352918114359487' },
     update: { status: ProductStatus.AVAILABLE },
     create: {
+      tenantId: DEFAULT_TENANT_ID,
       categoryId: smartphoneCategory.id,
       modelId: galaxyS24Ultra.id,
       variantId: galaxyS24UltraVariants[0].id,
@@ -328,7 +346,7 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash('Admin123!', 10);
 
-  await prisma.user.upsert({
+  const adminUser = await prisma.user.upsert({
     where: { email: 'admin@phonegabi.com' },
     update: {},
     create: {
@@ -343,7 +361,7 @@ async function main() {
   // 테스트 사용자 생성
   const testUserPassword = await bcrypt.hash('Test123!', 10);
 
-  await prisma.user.upsert({
+  const testUser = await prisma.user.upsert({
     where: { email: 'test@example.com' },
     update: {},
     create: {
@@ -351,6 +369,29 @@ async function main() {
       password: testUserPassword,
       name: '테스트 사용자',
       phone: '010-1234-5678',
+      role: UserRole.USER,
+    },
+  });
+
+  // 7. UserTenant 할당
+  console.log('🔗 Assigning users to default tenant...');
+
+  await prisma.userTenant.upsert({
+    where: { userId_tenantId: { userId: adminUser.id, tenantId: DEFAULT_TENANT_ID } },
+    update: {},
+    create: {
+      userId: adminUser.id,
+      tenantId: DEFAULT_TENANT_ID,
+      role: UserRole.SUPER_ADMIN,
+    },
+  });
+
+  await prisma.userTenant.upsert({
+    where: { userId_tenantId: { userId: testUser.id, tenantId: DEFAULT_TENANT_ID } },
+    update: {},
+    create: {
+      userId: testUser.id,
+      tenantId: DEFAULT_TENANT_ID,
       role: UserRole.USER,
     },
   });

@@ -16,6 +16,7 @@ describe('SellRequestsService', () => {
   let prisma: MockPrismaService;
 
   const userId = 'user-uuid-1';
+  const tenantId = 'default-tenant';
 
   const createSellRequestDto = {
     category: 'SMARTPHONE' as const,
@@ -107,7 +108,7 @@ describe('SellRequestsService', () => {
     it('정상적으로 판매 접수를 생성한다', async () => {
       prisma.sellRequest.create.mockResolvedValue(mockSellRequest);
 
-      const result = await service.create(userId, createSellRequestDto);
+      const result = await service.create(tenantId, userId, createSellRequestDto);
 
       expect(prisma.sellRequest.create).toHaveBeenCalledWith({
         data: {
@@ -121,6 +122,7 @@ describe('SellRequestsService', () => {
           estimatedPrice: createSellRequestDto.estimatedPrice,
           tradeMethod: createSellRequestDto.tradeMethod,
           deviceCondition: createSellRequestDto.deviceCondition,
+          tenantId: 'default-tenant',
         },
       });
       expect(result).toEqual(mockSellRequest);
@@ -133,7 +135,7 @@ describe('SellRequestsService', () => {
         color: null,
       });
 
-      const result = await service.create(userId, dtoWithoutColor);
+      const result = await service.create(tenantId, userId, dtoWithoutColor);
 
       expect(prisma.sellRequest.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -146,7 +148,7 @@ describe('SellRequestsService', () => {
     it('생성 시 상태가 PENDING으로 설정된다', async () => {
       prisma.sellRequest.create.mockResolvedValue(mockSellRequest);
 
-      const result = await service.create(userId, createSellRequestDto);
+      const result = await service.create(tenantId, userId, createSellRequestDto);
 
       expect(result.status).toBe(SellRequestStatus.PENDING);
     });
@@ -161,10 +163,10 @@ describe('SellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue(sellRequests);
       prisma.sellRequest.count.mockResolvedValue(1);
 
-      const result = await service.findAll(userId, { page: 1, limit: 10 });
+      const result = await service.findAll(tenantId, userId, { page: 1, limit: 10 });
 
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith({
-        where: { userId },
+        where: { tenantId, userId },
         include: {
           quotes: {
             orderBy: { price: 'desc' },
@@ -175,7 +177,7 @@ describe('SellRequestsService', () => {
         take: 10,
       });
       expect(prisma.sellRequest.count).toHaveBeenCalledWith({
-        where: { userId },
+        where: { tenantId, userId },
       });
       expect(result).toEqual({
         data: sellRequests,
@@ -192,7 +194,7 @@ describe('SellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(0);
 
-      await service.findAll(userId, {
+      await service.findAll(tenantId, userId, {
         status: SellRequestStatus.QUOTED,
         page: 1,
         limit: 10,
@@ -200,11 +202,11 @@ describe('SellRequestsService', () => {
 
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId, status: SellRequestStatus.QUOTED },
+          where: { tenantId, userId, status: SellRequestStatus.QUOTED },
         }),
       );
       expect(prisma.sellRequest.count).toHaveBeenCalledWith({
-        where: { userId, status: SellRequestStatus.QUOTED },
+        where: { tenantId, userId, status: SellRequestStatus.QUOTED },
       });
     });
 
@@ -212,7 +214,7 @@ describe('SellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(0);
 
-      await service.findAll(userId, {});
+      await service.findAll(tenantId, userId, {});
 
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -226,7 +228,7 @@ describe('SellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(25);
 
-      const result = await service.findAll(userId, { page: 2, limit: 10 });
+      const result = await service.findAll(tenantId, userId, { page: 2, limit: 10 });
 
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -241,7 +243,7 @@ describe('SellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(0);
 
-      const result = await service.findAll(userId, {});
+      const result = await service.findAll(tenantId, userId, {});
 
       expect(result).toHaveProperty('data');
       expect(result).toHaveProperty('meta');

@@ -11,6 +11,47 @@ datasource db {
 }
 
 // =============================================
+// 테넌트 관련
+// =============================================
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  domain    String?  @unique
+  settings  Json     @default("{}")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users        UserTenant[]
+  products     Product[]
+  orders       Order[]
+  orderItems   OrderItem[]
+  payments     Payment[]
+  sellRequests SellRequest[]
+  sellQuotes   SellQuote[]
+  reviews      Review[]
+
+  @@map("tenants")
+}
+
+model UserTenant {
+  userId   String   @map("user_id")
+  tenantId String   @map("tenant_id")
+  role     UserRole @default(USER)
+  isActive Boolean  @default(true)
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([userId, tenantId])
+  @@index([tenantId])
+  @@map("user_tenants")
+}
+
+// =============================================
 // 사용자 관련
 // =============================================
 
@@ -39,6 +80,7 @@ model User {
   sellRequests  SellRequest[]
   reviews       Review[]
   refreshTokens RefreshToken[]
+  tenants       UserTenant[]
 
   @@index([email])
   @@index([role])
@@ -164,6 +206,7 @@ model ModelVariant {
 
 model Product {
   id              String        @id @default(cuid())
+  tenantId        String        @map("tenant_id")
   categoryId      String
   modelId         String
   variantId       String
@@ -185,11 +228,13 @@ model Product {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  tenant     Tenant       @relation(fields: [tenantId], references: [id])
   category   Category     @relation(fields: [categoryId], references: [id])
   model      DeviceModel  @relation(fields: [modelId], references: [id])
   variant    ModelVariant @relation(fields: [variantId], references: [id])
   orderItems OrderItem[]
 
+  @@index([tenantId])
   @@index([categoryId])
   @@index([modelId])
   @@index([grade])
@@ -257,6 +302,7 @@ enum TradeMethod {
 
 model SellRequest {
   id              String            @id @default(cuid())
+  tenantId        String            @map("tenant_id")
   userId          String
   category        DeviceCategory
   brand           Brand
@@ -276,10 +322,12 @@ model SellRequest {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
+  tenant  Tenant        @relation(fields: [tenantId], references: [id])
   user    User          @relation(fields: [userId], references: [id])
   quotes  SellQuote[]
   reviews Review[]
 
+  @@index([tenantId])
   @@index([userId])
   @@index([status])
   @@index([createdAt])
@@ -287,6 +335,7 @@ model SellRequest {
 
 model SellQuote {
   id            String   @id @default(cuid())
+  tenantId      String   @map("tenant_id")
   sellRequestId String
   partnerId     String?  // 파트너 사업자 ID
   price         Int
@@ -294,8 +343,10 @@ model SellQuote {
   isAccepted    Boolean  @default(false)
   createdAt     DateTime @default(now())
 
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
   sellRequest SellRequest @relation(fields: [sellRequestId], references: [id])
 
+  @@index([tenantId])
   @@index([sellRequestId])
 }
 
@@ -330,6 +381,7 @@ enum PaymentStatus {
 
 model Order {
   id               String        @id @default(cuid())
+  tenantId         String        @map("tenant_id")
   orderNumber      String        @unique
   userId           String
   status           OrderStatus   @default(PENDING_PAYMENT)
@@ -349,11 +401,13 @@ model Order {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
+  tenant   Tenant      @relation(fields: [tenantId], references: [id])
   user     User        @relation(fields: [userId], references: [id])
   items    OrderItem[]
   payment  Payment?
   reviews  Review[]
 
+  @@index([tenantId])
   @@index([userId])
   @@index([orderNumber])
   @@index([status])
@@ -362,20 +416,24 @@ model Order {
 
 model OrderItem {
   id        String @id @default(cuid())
+  tenantId  String @map("tenant_id")
   orderId   String
   productId String
   quantity  Int    @default(1)
   price     Int
 
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
   order   Order   @relation(fields: [orderId], references: [id])
   product Product @relation(fields: [productId], references: [id])
 
+  @@index([tenantId])
   @@index([orderId])
   @@index([productId])
 }
 
 model Payment {
   id            String        @id @default(cuid())
+  tenantId      String        @map("tenant_id")
   orderId       String        @unique
   method        PaymentMethod
   status        PaymentStatus @default(PENDING)
@@ -387,8 +445,10 @@ model Payment {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  order Order @relation(fields: [orderId], references: [id])
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  order  Order  @relation(fields: [orderId], references: [id])
 
+  @@index([tenantId])
   @@index([transactionId])
 }
 
@@ -403,6 +463,7 @@ enum ReviewType {
 
 model Review {
   id             String      @id @default(cuid())
+  tenantId       String      @map("tenant_id")
   userId         String
   type           ReviewType
   orderId        String?
@@ -418,10 +479,12 @@ model Review {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
   user        User         @relation(fields: [userId], references: [id])
   order       Order?       @relation(fields: [orderId], references: [id])
   sellRequest SellRequest? @relation(fields: [sellRequestId], references: [id])
 
+  @@index([tenantId])
   @@index([userId])
   @@index([type])
   @@index([createdAt])

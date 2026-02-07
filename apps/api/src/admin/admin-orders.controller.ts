@@ -11,6 +11,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentTenant } from '../tenant/tenant.decorator';
 import { AdminOrdersService } from './admin-orders.service';
 import {
   AdminOrderQueryDto,
@@ -28,8 +29,8 @@ export class AdminOrdersController {
 
   @Get()
   @ApiOperation({ summary: '전체 주문 목록 (관리자)' })
-  findAll(@Query() query: AdminOrderQueryDto) {
-    return this.ordersService.findAll(query);
+  findAll(@CurrentTenant() tenantId: string, @Query() query: AdminOrderQueryDto) {
+    return this.ordersService.findAll(tenantId, query);
   }
 
   @Get(':id')

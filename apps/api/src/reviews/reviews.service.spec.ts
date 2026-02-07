@@ -15,6 +15,7 @@ describe('ReviewsService', () => {
 
   const mockUserId = 'user-uuid-1';
   const mockReviewId = 'review-uuid-1';
+  const tenantId = 'default-tenant';
 
   const mockReview = {
     id: mockReviewId,
@@ -95,7 +96,7 @@ describe('ReviewsService', () => {
       prisma.review.findFirst.mockResolvedValue(null);
       prisma.review.create.mockResolvedValue(mockReview);
 
-      const result = await service.create(mockUserId, buyDto);
+      const result = await service.create(tenantId, mockUserId, buyDto);
 
       expect(prisma.order.findFirst).toHaveBeenCalledWith({
         where: {
@@ -119,6 +120,7 @@ describe('ReviewsService', () => {
           rating: buyDto.rating,
           images: [],
           quotesReceived: undefined,
+          tenantId: 'default-tenant',
         },
         include: {
           user: { select: { id: true, name: true } },
@@ -130,10 +132,10 @@ describe('ReviewsService', () => {
     it('미완료 주문에 대한 BUY 리뷰 작성 시 BadRequestException을 던진다', async () => {
       prisma.order.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(mockUserId, buyDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, buyDto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(mockUserId, buyDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, buyDto)).rejects.toThrow(
         '완료된 주문만 리뷰를 작성할 수 있습니다.',
       );
       expect(prisma.review.create).not.toHaveBeenCalled();
@@ -147,10 +149,10 @@ describe('ReviewsService', () => {
       });
       prisma.review.findFirst.mockResolvedValue(mockReview);
 
-      await expect(service.create(mockUserId, buyDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, buyDto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(mockUserId, buyDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, buyDto)).rejects.toThrow(
         '이미 리뷰를 작성하셨습니다.',
       );
       expect(prisma.review.create).not.toHaveBeenCalled();
@@ -165,7 +167,7 @@ describe('ReviewsService', () => {
       prisma.review.findFirst.mockResolvedValue(null);
       prisma.review.create.mockResolvedValue(mockSellReview);
 
-      const result = await service.create(mockUserId, sellDto);
+      const result = await service.create(tenantId, mockUserId, sellDto);
 
       expect(prisma.sellRequest.findFirst).toHaveBeenCalledWith({
         where: {
@@ -189,6 +191,7 @@ describe('ReviewsService', () => {
           rating: sellDto.rating,
           images: [],
           quotesReceived: sellDto.quotesReceived,
+          tenantId: 'default-tenant',
         },
         include: {
           user: { select: { id: true, name: true } },
@@ -200,10 +203,10 @@ describe('ReviewsService', () => {
     it('미완료 판매 접수에 대한 SELL 리뷰 작성 시 BadRequestException을 던진다', async () => {
       prisma.sellRequest.findFirst.mockResolvedValue(null);
 
-      await expect(service.create(mockUserId, sellDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, sellDto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(mockUserId, sellDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, sellDto)).rejects.toThrow(
         '완료된 판매만 리뷰를 작성할 수 있습니다.',
       );
       expect(prisma.review.create).not.toHaveBeenCalled();
@@ -217,10 +220,10 @@ describe('ReviewsService', () => {
       });
       prisma.review.findFirst.mockResolvedValue(mockSellReview);
 
-      await expect(service.create(mockUserId, sellDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, sellDto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(mockUserId, sellDto)).rejects.toThrow(
+      await expect(service.create(tenantId, mockUserId, sellDto)).rejects.toThrow(
         '이미 리뷰를 작성하셨습니다.',
       );
       expect(prisma.review.create).not.toHaveBeenCalled();
@@ -242,7 +245,7 @@ describe('ReviewsService', () => {
         images: dtoWithImages.images,
       });
 
-      await service.create(mockUserId, dtoWithImages);
+      await service.create(tenantId, mockUserId, dtoWithImages);
 
       expect(prisma.review.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -265,10 +268,10 @@ describe('ReviewsService', () => {
       prisma.review.count.mockResolvedValue(1);
 
       const query: ReviewQueryDto = {};
-      const result = await service.findAll(query);
+      const result = await service.findAll(tenantId, query);
 
       expect(prisma.review.findMany).toHaveBeenCalledWith({
-        where: { isPublished: true },
+        where: { tenantId, isPublished: true },
         include: {
           user: { select: { id: true, name: true } },
         },
@@ -277,7 +280,7 @@ describe('ReviewsService', () => {
         take: 10,
       });
       expect(prisma.review.count).toHaveBeenCalledWith({
-        where: { isPublished: true },
+        where: { tenantId, isPublished: true },
       });
       expect(result).toEqual({
         data: mockReviews,
@@ -290,12 +293,12 @@ describe('ReviewsService', () => {
       prisma.review.count.mockResolvedValue(1);
 
       const query: ReviewQueryDto = { search: 'iPhone' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            isPublished: true,
+            tenantId, isPublished: true,
             OR: [
               { title: { contains: 'iPhone', mode: 'insensitive' } },
               { content: { contains: 'iPhone', mode: 'insensitive' } },
@@ -311,11 +314,11 @@ describe('ReviewsService', () => {
       prisma.review.count.mockResolvedValue(0);
 
       const query: ReviewQueryDto = { type: ReviewType.SELL };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { isPublished: true, type: ReviewType.SELL },
+          where: { tenantId, isPublished: true, type: ReviewType.SELL },
         }),
       );
     });
@@ -325,7 +328,7 @@ describe('ReviewsService', () => {
       prisma.review.count.mockResolvedValue(0);
 
       const query: ReviewQueryDto = { sortBy: 'rating', sortOrder: 'asc' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -339,7 +342,7 @@ describe('ReviewsService', () => {
       prisma.review.count.mockResolvedValue(0);
 
       const query: ReviewQueryDto = { sortBy: 'likes', sortOrder: 'desc' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -353,7 +356,7 @@ describe('ReviewsService', () => {
       prisma.review.count.mockResolvedValue(25);
 
       const query: ReviewQueryDto = { page: 3, limit: 5 };
-      const result = await service.findAll(query);
+      const result = await service.findAll(tenantId, query);
 
       expect(prisma.review.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -552,19 +555,19 @@ describe('ReviewsService', () => {
         _avg: { rating: 4.5 },
       });
 
-      const result = await service.getStats();
+      const result = await service.getStats(tenantId);
 
       expect(prisma.review.count).toHaveBeenCalledWith({
-        where: { isPublished: true },
+        where: { tenantId, isPublished: true },
       });
       expect(prisma.review.count).toHaveBeenCalledWith({
-        where: { isPublished: true, type: ReviewType.SELL },
+        where: { tenantId, isPublished: true, type: ReviewType.SELL },
       });
       expect(prisma.review.count).toHaveBeenCalledWith({
-        where: { isPublished: true, type: ReviewType.BUY },
+        where: { tenantId, isPublished: true, type: ReviewType.BUY },
       });
       expect(prisma.review.aggregate).toHaveBeenCalledWith({
-        where: { isPublished: true },
+        where: { tenantId, isPublished: true },
         _avg: { rating: true },
       });
       expect(result).toEqual({
@@ -584,7 +587,7 @@ describe('ReviewsService', () => {
         _avg: { rating: null },
       });
 
-      const result = await service.getStats();
+      const result = await service.getStats(tenantId);
 
       expect(result).toEqual({
         totalReviews: 0,

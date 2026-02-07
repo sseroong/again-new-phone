@@ -18,6 +18,7 @@ describe('OrdersService', () => {
   let configService: { get: jest.Mock };
 
   const userId = 'user-uuid-1';
+  const tenantId = 'default-tenant';
 
   const mockProduct1 = {
     id: 'product-1',
@@ -113,7 +114,7 @@ describe('OrdersService', () => {
       prisma.product.updateMany.mockResolvedValue({ count: 2 });
       prisma.order.create.mockResolvedValue(mockOrder);
 
-      const result = await service.create(userId, createOrderDto);
+      const result = await service.create(tenantId, userId, createOrderDto);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith({
         where: { id: { in: ['product-1', 'product-2'] } },
@@ -126,6 +127,7 @@ describe('OrdersService', () => {
         data: expect.objectContaining({
           userId,
           totalAmount: 2000000,
+          tenantId: 'default-tenant',
           shippingName: '홍길동',
           shippingPhone: '010-1234-5678',
           shippingZipCode: '06100',
@@ -134,8 +136,8 @@ describe('OrdersService', () => {
           shippingMemo: '부재 시 경비실에 맡겨주세요',
           items: {
             create: [
-              { productId: 'product-1', quantity: 1, price: 1200000 },
-              { productId: 'product-2', quantity: 1, price: 800000 },
+              { productId: 'product-1', quantity: 1, price: 1200000, tenantId: 'default-tenant' },
+              { productId: 'product-2', quantity: 1, price: 800000, tenantId: 'default-tenant' },
             ],
           },
         }),
@@ -169,7 +171,7 @@ describe('OrdersService', () => {
         items: [{ productId: 'product-1', quantity: 1 }],
       };
 
-      await service.create(userId, singleItemDto);
+      await service.create(tenantId, userId, singleItemDto);
 
       expect(prisma.order.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -193,7 +195,7 @@ describe('OrdersService', () => {
         items: [{ productId: 'product-1', quantity: 2 }],
       };
 
-      await service.create(userId, multiQuantityDto);
+      await service.create(tenantId, userId, multiQuantityDto);
 
       expect(prisma.order.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -201,7 +203,7 @@ describe('OrdersService', () => {
             totalAmount: 2400000,
             items: {
               create: [
-                { productId: 'product-1', quantity: 2, price: 1200000 },
+                { productId: 'product-1', quantity: 2, price: 1200000, tenantId: 'default-tenant' },
               ],
             },
           }),
@@ -213,10 +215,10 @@ describe('OrdersService', () => {
       // 2개 요청했지만 1개만 반환
       prisma.product.findMany.mockResolvedValue([mockProduct1]);
 
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
+      await expect(service.create(tenantId, userId, createOrderDto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
+      await expect(service.create(tenantId, userId, createOrderDto)).rejects.toThrow(
         '일부 상품을 찾을 수 없습니다.',
       );
       expect(prisma.executeInTransaction).not.toHaveBeenCalled();
@@ -226,10 +228,10 @@ describe('OrdersService', () => {
       const soldProduct = { ...mockProduct2, status: ProductStatus.SOLD };
       prisma.product.findMany.mockResolvedValue([mockProduct1, soldProduct]);
 
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
+      await expect(service.create(tenantId, userId, createOrderDto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
+      await expect(service.create(tenantId, userId, createOrderDto)).rejects.toThrow(
         '일부 상품이 판매 불가 상태입니다.',
       );
       expect(prisma.executeInTransaction).not.toHaveBeenCalled();
@@ -245,10 +247,10 @@ describe('OrdersService', () => {
         reservedProduct,
       ]);
 
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
+      await expect(service.create(tenantId, userId, createOrderDto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.create(userId, createOrderDto)).rejects.toThrow(
+      await expect(service.create(tenantId, userId, createOrderDto)).rejects.toThrow(
         '일부 상품이 판매 불가 상태입니다.',
       );
     });
@@ -263,10 +265,10 @@ describe('OrdersService', () => {
       prisma.order.findMany.mockResolvedValue(orders);
       prisma.order.count.mockResolvedValue(1);
 
-      const result = await service.findAll(userId, { page: 1, limit: 10 });
+      const result = await service.findAll(tenantId, userId, { page: 1, limit: 10 });
 
       expect(prisma.order.findMany).toHaveBeenCalledWith({
-        where: { userId },
+        where: { tenantId, userId },
         include: {
           items: {
             include: {
@@ -284,7 +286,7 @@ describe('OrdersService', () => {
         skip: 0,
         take: 10,
       });
-      expect(prisma.order.count).toHaveBeenCalledWith({ where: { userId } });
+      expect(prisma.order.count).toHaveBeenCalledWith({ where: { tenantId, userId } });
       expect(result).toEqual({
         data: orders,
         meta: {
@@ -300,7 +302,7 @@ describe('OrdersService', () => {
       prisma.order.findMany.mockResolvedValue([]);
       prisma.order.count.mockResolvedValue(0);
 
-      await service.findAll(userId, {
+      await service.findAll(tenantId, userId, {
         status: OrderStatus.PAID,
         page: 1,
         limit: 10,
@@ -308,11 +310,11 @@ describe('OrdersService', () => {
 
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId, status: OrderStatus.PAID },
+          where: { tenantId, userId, status: OrderStatus.PAID },
         }),
       );
       expect(prisma.order.count).toHaveBeenCalledWith({
-        where: { userId, status: OrderStatus.PAID },
+        where: { tenantId, userId, status: OrderStatus.PAID },
       });
     });
 
@@ -320,7 +322,7 @@ describe('OrdersService', () => {
       prisma.order.findMany.mockResolvedValue([]);
       prisma.order.count.mockResolvedValue(0);
 
-      await service.findAll(userId, {});
+      await service.findAll(tenantId, userId, {});
 
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -334,7 +336,7 @@ describe('OrdersService', () => {
       prisma.order.findMany.mockResolvedValue([]);
       prisma.order.count.mockResolvedValue(15);
 
-      const result = await service.findAll(userId, { page: 2, limit: 10 });
+      const result = await service.findAll(tenantId, userId, { page: 2, limit: 10 });
 
       expect(prisma.order.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
