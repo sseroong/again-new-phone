@@ -30,6 +30,8 @@ describe('ProductsService', () => {
     jest.clearAllMocks();
   });
 
+  const tenantId = 'default-tenant';
+
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
@@ -75,7 +77,7 @@ describe('ProductsService', () => {
       prisma.product.findMany.mockResolvedValue(mockProducts);
       prisma.product.count.mockResolvedValue(2);
 
-      const result = await service.findAll({} as ProductQueryDto);
+      const result = await service.findAll(tenantId, {} as ProductQueryDto);
 
       expect(result).toEqual({
         data: mockProducts,
@@ -89,7 +91,7 @@ describe('ProductsService', () => {
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { status: ProductStatus.AVAILABLE },
+          where: { tenantId, status: ProductStatus.AVAILABLE },
           include: { category: true, model: true, variant: true },
           orderBy: { createdAt: 'desc' },
           skip: 0,
@@ -97,7 +99,7 @@ describe('ProductsService', () => {
         }),
       );
       expect(prisma.product.count).toHaveBeenCalledWith({
-        where: { status: ProductStatus.AVAILABLE },
+        where: { tenantId, status: ProductStatus.AVAILABLE },
       });
     });
 
@@ -106,11 +108,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { category: 'SMARTPHONE' as any };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             status: ProductStatus.AVAILABLE,
             category: { type: 'SMARTPHONE' },
           }),
@@ -123,11 +126,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { brand: 'APPLE' as any };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             status: ProductStatus.AVAILABLE,
             model: { brand: 'APPLE' },
           }),
@@ -140,11 +144,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { modelId: 'model-1' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             status: ProductStatus.AVAILABLE,
             modelId: 'model-1',
           }),
@@ -157,11 +162,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { grade: 'A' as any };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             status: ProductStatus.AVAILABLE,
             grade: 'A',
           }),
@@ -174,11 +180,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { storage: '256GB' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             status: ProductStatus.AVAILABLE,
             variant: { storage: '256GB' },
           }),
@@ -191,11 +198,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { minPrice: 400000 };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             sellingPrice: { gte: 400000 },
           }),
         }),
@@ -207,11 +215,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { maxPrice: 600000 };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             sellingPrice: { lte: 600000 },
           }),
         }),
@@ -223,11 +232,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { minPrice: 200000, maxPrice: 600000 };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             sellingPrice: { gte: 200000, lte: 600000 },
           }),
         }),
@@ -239,11 +249,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: ProductQueryDto = { search: 'iPhone' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             OR: [
               { model: { name: { contains: 'iPhone', mode: 'insensitive' } } },
               { description: { contains: 'iPhone', mode: 'insensitive' } },
@@ -258,7 +269,7 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(2);
 
       const query: ProductQueryDto = { sortBy: 'price', sortOrder: 'asc' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -272,7 +283,7 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(2);
 
       const query: ProductQueryDto = { sortBy: 'rating', sortOrder: 'desc' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -286,7 +297,7 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(2);
 
       const query: ProductQueryDto = { sortBy: 'viewCount', sortOrder: 'desc' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -300,7 +311,7 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(2);
 
       const query: ProductQueryDto = { sortBy: 'unknown' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -314,7 +325,7 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(25);
 
       const query: ProductQueryDto = { page: 2, limit: 10 };
-      const result = await service.findAll(query);
+      const result = await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -335,7 +346,7 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(21);
 
       const query: ProductQueryDto = { page: 1, limit: 10 };
-      const result = await service.findAll(query);
+      const result = await service.findAll(tenantId, query);
 
       expect(result.meta.totalPages).toBe(3);
     });
@@ -344,7 +355,7 @@ describe('ProductsService', () => {
       prisma.product.findMany.mockResolvedValue([]);
       prisma.product.count.mockResolvedValue(0);
 
-      const result = await service.findAll({} as ProductQueryDto);
+      const result = await service.findAll(tenantId, {} as ProductQueryDto);
 
       expect(result).toEqual({
         data: [],
@@ -373,11 +384,12 @@ describe('ProductsService', () => {
         sortOrder: 'asc',
       };
 
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             status: ProductStatus.AVAILABLE,
             category: { type: 'SMARTPHONE' },
             model: { brand: 'APPLE' },
@@ -396,11 +408,12 @@ describe('ProductsService', () => {
       prisma.product.count.mockResolvedValue(0);
 
       const query: ProductQueryDto = { status: ProductStatus.SOLD };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
+            tenantId,
             status: ProductStatus.SOLD,
           }),
         }),
@@ -440,7 +453,7 @@ describe('ProductsService', () => {
         viewCount: 11,
       });
 
-      const result = await service.findOne('product-1');
+      const result = await service.findOne(tenantId, 'product-1');
 
       expect(result).toEqual(mockProduct);
       expect(prisma.product.findUnique).toHaveBeenCalledWith({
@@ -460,10 +473,10 @@ describe('ProductsService', () => {
     it('should throw NotFoundException when product does not exist', async () => {
       prisma.product.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent-id')).rejects.toThrow(
+      await expect(service.findOne(tenantId, 'nonexistent-id')).rejects.toThrow(
         NotFoundException,
       );
-      await expect(service.findOne('nonexistent-id')).rejects.toThrow(
+      await expect(service.findOne(tenantId, 'nonexistent-id')).rejects.toThrow(
         '상품을 찾을 수 없습니다.',
       );
       expect(prisma.product.update).not.toHaveBeenCalled();
@@ -700,10 +713,10 @@ describe('ProductsService', () => {
       prisma.product.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.getSimilarProducts('nonexistent-id'),
+        service.getSimilarProducts(tenantId, 'nonexistent-id'),
       ).rejects.toThrow(NotFoundException);
       await expect(
-        service.getSimilarProducts('nonexistent-id'),
+        service.getSimilarProducts(tenantId, 'nonexistent-id'),
       ).rejects.toThrow('상품을 찾을 수 없습니다.');
     });
 
@@ -711,7 +724,7 @@ describe('ProductsService', () => {
       prisma.product.findUnique.mockResolvedValue(baseProduct);
       prisma.product.findMany.mockResolvedValueOnce(sameModelProducts);
 
-      const result = await service.getSimilarProducts('product-1');
+      const result = await service.getSimilarProducts(tenantId, 'product-1');
 
       expect(result).toEqual(sameModelProducts);
       expect(result).toHaveLength(4);
@@ -719,6 +732,7 @@ describe('ProductsService', () => {
       expect(prisma.product.findMany).toHaveBeenCalledTimes(1);
       expect(prisma.product.findMany).toHaveBeenCalledWith({
         where: {
+          tenantId,
           modelId: 'model-1',
           id: { not: 'product-1' },
           status: ProductStatus.AVAILABLE,
@@ -736,7 +750,7 @@ describe('ProductsService', () => {
         .mockResolvedValueOnce(partialSameModel)
         .mockResolvedValueOnce(sameCategoryProducts);
 
-      const result = await service.getSimilarProducts('product-1');
+      const result = await service.getSimilarProducts(tenantId, 'product-1');
 
       // The service mutates the first findMany result via push, so the
       // returned array contains same-model products followed by backfill.
@@ -751,6 +765,7 @@ describe('ProductsService', () => {
       // First call: same model
       expect(prisma.product.findMany).toHaveBeenNthCalledWith(1, {
         where: {
+          tenantId,
           modelId: 'model-1',
           id: { not: 'product-1' },
           status: ProductStatus.AVAILABLE,
@@ -762,6 +777,7 @@ describe('ProductsService', () => {
       // Second call: same category backfill
       expect(prisma.product.findMany).toHaveBeenNthCalledWith(2, {
         where: {
+          tenantId,
           categoryId: 'cat-1',
           id: { notIn: ['product-1', 'product-2', 'product-3'] },
           status: ProductStatus.AVAILABLE,
@@ -775,7 +791,7 @@ describe('ProductsService', () => {
       prisma.product.findUnique.mockResolvedValue(baseProduct);
       prisma.product.findMany.mockResolvedValueOnce(sameModelProducts);
 
-      await service.getSimilarProducts('product-1', 4);
+      await service.getSimilarProducts(tenantId, 'product-1', 4);
 
       expect(prisma.product.findMany).toHaveBeenCalledTimes(1);
     });
@@ -786,13 +802,14 @@ describe('ProductsService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce(sameCategoryProducts);
 
-      const result = await service.getSimilarProducts('product-1', 4);
+      const result = await service.getSimilarProducts(tenantId, 'product-1', 4);
 
       expect(result).toEqual(sameCategoryProducts);
       expect(prisma.product.findMany).toHaveBeenCalledTimes(2);
 
       expect(prisma.product.findMany).toHaveBeenNthCalledWith(2, {
         where: {
+          tenantId,
           categoryId: 'cat-1',
           id: { notIn: ['product-1'] },
           status: ProductStatus.AVAILABLE,
@@ -808,7 +825,7 @@ describe('ProductsService', () => {
         sameModelProducts.slice(0, 2),
       );
 
-      await service.getSimilarProducts('product-1', 2);
+      await service.getSimilarProducts(tenantId, 'product-1', 2);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 2 }),
@@ -843,11 +860,11 @@ describe('ProductsService', () => {
     it('should return popular products sorted by viewCount desc with default limit', async () => {
       prisma.product.findMany.mockResolvedValue(mockPopularProducts);
 
-      const result = await service.getPopularProducts();
+      const result = await service.getPopularProducts(tenantId);
 
       expect(result).toEqual(mockPopularProducts);
       expect(prisma.product.findMany).toHaveBeenCalledWith({
-        where: { status: ProductStatus.AVAILABLE },
+        where: { tenantId, status: ProductStatus.AVAILABLE },
         include: { category: true, model: true, variant: true },
         orderBy: { viewCount: 'desc' },
         take: 10,
@@ -857,7 +874,7 @@ describe('ProductsService', () => {
     it('should respect custom limit parameter', async () => {
       prisma.product.findMany.mockResolvedValue(mockPopularProducts);
 
-      await service.getPopularProducts(5);
+      await service.getPopularProducts(tenantId, 5);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 5 }),
@@ -867,7 +884,7 @@ describe('ProductsService', () => {
     it('should return empty array when no products exist', async () => {
       prisma.product.findMany.mockResolvedValue([]);
 
-      const result = await service.getPopularProducts();
+      const result = await service.getPopularProducts(tenantId);
 
       expect(result).toEqual([]);
     });
@@ -899,11 +916,11 @@ describe('ProductsService', () => {
     it('should return new arrivals sorted by createdAt desc with default limit', async () => {
       prisma.product.findMany.mockResolvedValue(mockNewProducts);
 
-      const result = await service.getNewArrivals();
+      const result = await service.getNewArrivals(tenantId);
 
       expect(result).toEqual(mockNewProducts);
       expect(prisma.product.findMany).toHaveBeenCalledWith({
-        where: { status: ProductStatus.AVAILABLE },
+        where: { tenantId, status: ProductStatus.AVAILABLE },
         include: { category: true, model: true, variant: true },
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -913,7 +930,7 @@ describe('ProductsService', () => {
     it('should respect custom limit parameter', async () => {
       prisma.product.findMany.mockResolvedValue(mockNewProducts);
 
-      await service.getNewArrivals(5);
+      await service.getNewArrivals(tenantId, 5);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ take: 5 }),
@@ -923,7 +940,7 @@ describe('ProductsService', () => {
     it('should return empty array when no products exist', async () => {
       prisma.product.findMany.mockResolvedValue([]);
 
-      const result = await service.getNewArrivals();
+      const result = await service.getNewArrivals(tenantId);
 
       expect(result).toEqual([]);
     });

@@ -50,6 +50,8 @@ export type MockPrismaService = {
   priceGuide: MockPrismaModel;
   priceHistory: MockPrismaModel;
   address: MockPrismaModel;
+  tenant: MockPrismaModel;
+  userTenant: MockPrismaModel;
 };
 
 export function createMockPrismaService(): MockPrismaService {
@@ -69,6 +71,8 @@ export function createMockPrismaService(): MockPrismaService {
     priceGuide: createMockModel(),
     priceHistory: createMockModel(),
     address: createMockModel(),
+    tenant: createMockModel(),
+    userTenant: createMockModel(),
     executeInTransaction: jest.fn((fn) => fn(mock)),
     $transaction: jest.fn(),
   };

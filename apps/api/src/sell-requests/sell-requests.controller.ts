@@ -21,6 +21,7 @@ import { SellRequestsService } from './sell-requests.service';
 import { CreateSellRequestDto, SellRequestQueryDto, UpdateSellRequestDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentTenant } from '../tenant/tenant.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('sell-requests')
@@ -34,20 +35,22 @@ export class SellRequestsController {
   @ApiOperation({ summary: '판매 접수 생성' })
   @ApiResponse({ status: 201, description: '접수 성공' })
   async create(
+    @CurrentTenant() tenantId: string,
     @CurrentUser('id') userId: string,
     @Body() dto: CreateSellRequestDto,
   ) {
-    return this.sellRequestsService.create(userId, dto);
+    return this.sellRequestsService.create(tenantId, userId, dto);
   }
 
   @Get()
   @ApiOperation({ summary: '내 판매 접수 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
+    @CurrentTenant() tenantId: string,
     @CurrentUser('id') userId: string,
     @Query() query: SellRequestQueryDto,
   ) {
-    return this.sellRequestsService.findAll(userId, query);
+    return this.sellRequestsService.findAll(tenantId, userId, query);
   }
 
   @Get(':id')

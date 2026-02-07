@@ -17,6 +17,8 @@ describe('AdminProductsService', () => {
   let service: AdminProductsService;
   let prisma: MockPrismaService;
 
+  const tenantId = 'default-tenant';
+
   beforeEach(async () => {
     const mockPrisma = createMockPrismaService();
     const module: TestingModule = await Test.createTestingModule({
@@ -78,7 +80,7 @@ describe('AdminProductsService', () => {
       prisma.product.findMany.mockResolvedValue(mockProducts);
       prisma.product.count.mockResolvedValue(2);
 
-      const result = await service.findAll({} as AdminProductQueryDto);
+      const result = await service.findAll(tenantId, {} as AdminProductQueryDto);
 
       expect(result).toEqual({
         data: mockProducts,
@@ -92,14 +94,14 @@ describe('AdminProductsService', () => {
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {},
+          where: { tenantId },
           include: { category: true, model: true, variant: true },
           orderBy: { createdAt: 'desc' },
           skip: 0,
           take: 20,
         }),
       );
-      expect(prisma.product.count).toHaveBeenCalledWith({ where: {} });
+      expect(prisma.product.count).toHaveBeenCalledWith({ where: { tenantId } });
     });
 
     it('카테고리 필터를 적용한다', async () => {
@@ -107,7 +109,7 @@ describe('AdminProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: AdminProductQueryDto = { category: 'SMARTPHONE' as any };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -123,7 +125,7 @@ describe('AdminProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: AdminProductQueryDto = { brand: 'APPLE' as any };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -139,7 +141,7 @@ describe('AdminProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: AdminProductQueryDto = { search: 'iPhone' };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -165,7 +167,7 @@ describe('AdminProductsService', () => {
       prisma.product.count.mockResolvedValue(25);
 
       const query: AdminProductQueryDto = { page: 2, limit: 10 };
-      const result = await service.findAll(query);
+      const result = await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -186,7 +188,7 @@ describe('AdminProductsService', () => {
       prisma.product.count.mockResolvedValue(1);
 
       const query: AdminProductQueryDto = { grade: ProductGrade.A };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -202,7 +204,7 @@ describe('AdminProductsService', () => {
       prisma.product.count.mockResolvedValue(0);
 
       const query: AdminProductQueryDto = { status: ProductStatus.SOLD };
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -217,7 +219,7 @@ describe('AdminProductsService', () => {
       prisma.product.findMany.mockResolvedValue([]);
       prisma.product.count.mockResolvedValue(0);
 
-      const result = await service.findAll({} as AdminProductQueryDto);
+      const result = await service.findAll(tenantId, {} as AdminProductQueryDto);
 
       expect(result).toEqual({
         data: [],
@@ -235,7 +237,7 @@ describe('AdminProductsService', () => {
       prisma.product.count.mockResolvedValue(21);
 
       const query: AdminProductQueryDto = { page: 1, limit: 10 };
-      const result = await service.findAll(query);
+      const result = await service.findAll(tenantId, query);
 
       expect(result.meta.totalPages).toBe(3);
     });
@@ -254,7 +256,7 @@ describe('AdminProductsService', () => {
         limit: 10,
       };
 
-      await service.findAll(query);
+      await service.findAll(tenantId, query);
 
       expect(prisma.product.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -367,13 +369,13 @@ describe('AdminProductsService', () => {
     it('새 상품을 생성한다', async () => {
       prisma.product.create.mockResolvedValue(mockCreatedProduct);
 
-      const result = await service.create(createDto);
+      const result = await service.create(tenantId, createDto);
 
       expect(result).toEqual(mockCreatedProduct);
       expect(prisma.product.create).toHaveBeenCalledWith({
         data: {
           categoryId: createDto.categoryId,
-          tenantId: 'default-tenant',
+          tenantId,
           modelId: createDto.modelId,
           variantId: createDto.variantId,
           grade: createDto.grade,
@@ -407,7 +409,7 @@ describe('AdminProductsService', () => {
         images: [],
       });
 
-      await service.create(dtoWithoutImages);
+      await service.create(tenantId, dtoWithoutImages);
 
       expect(prisma.product.create).toHaveBeenCalledWith(
         expect.objectContaining({

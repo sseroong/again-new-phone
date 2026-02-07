@@ -18,7 +18,7 @@ export class OrdersService {
     private configService: ConfigService,
   ) {}
 
-  async create(userId: string, dto: CreateOrderDto) {
+  async create(tenantId: string, userId: string, dto: CreateOrderDto) {
     // 상품 조회 및 검증
     const productIds = dto.items.map((item) => item.productId);
     const products = await this.prisma.product.findMany({
@@ -49,7 +49,7 @@ export class OrdersService {
         productId: item.productId,
         quantity: item.quantity,
         price: product.sellingPrice,
-        tenantId: 'default-tenant',
+        tenantId,
       };
     });
 
@@ -70,7 +70,7 @@ export class OrdersService {
           orderNumber,
           userId,
           totalAmount,
-          tenantId: 'default-tenant',
+          tenantId,
           shippingName: dto.shippingName,
           shippingPhone: dto.shippingPhone,
           shippingZipCode: dto.shippingZipCode,
@@ -101,10 +101,10 @@ export class OrdersService {
     return order;
   }
 
-  async findAll(userId: string, query: OrderQueryDto) {
+  async findAll(tenantId: string, userId: string, query: OrderQueryDto) {
     const { status, page = 1, limit = 10 } = query;
 
-    const where: Prisma.OrderWhereInput = { userId };
+    const where: Prisma.OrderWhereInput = { tenantId, userId };
 
     if (status) {
       where.status = status;
@@ -305,7 +305,7 @@ export class OrdersService {
           data: {
             orderId: order.id,
             method: (tossResponse.method === '카드' ? 'CARD' : 'BANK_TRANSFER') as any,
-            tenantId: 'default-tenant',
+            tenantId: order.tenantId,
             amount: order.totalAmount,
             ...paymentData,
           },

@@ -15,11 +15,11 @@ import {
 export class AdminSellRequestsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: AdminSellRequestQueryDto) {
+  async findAll(tenantId: string, query: AdminSellRequestQueryDto) {
     const { status, search, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.SellRequestWhereInput = {};
+    const where: Prisma.SellRequestWhereInput = { tenantId };
 
     if (status) where.status = status;
 
@@ -102,7 +102,7 @@ export class AdminSellRequestsService {
     });
   }
 
-  async createQuote(id: string, dto: AdminCreateQuoteDto) {
+  async createQuote(tenantId: string, id: string, dto: AdminCreateQuoteDto) {
     const sellRequest = await this.prisma.sellRequest.findUnique({
       where: { id },
     });
@@ -123,7 +123,7 @@ export class AdminSellRequestsService {
         data: {
           sellRequestId: id,
           price: dto.price,
-          tenantId: 'default-tenant',
+          tenantId,
           notes: dto.notes,
         },
       });

@@ -12,6 +12,8 @@ describe('AdminSellRequestsService', () => {
   let service: AdminSellRequestsService;
   let prisma: MockPrismaService;
 
+  const tenantId = 'default-tenant';
+
   beforeEach(async () => {
     const mockPrisma = createMockPrismaService();
     const module: TestingModule = await Test.createTestingModule({
@@ -68,7 +70,7 @@ describe('AdminSellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue(sellRequests);
       prisma.sellRequest.count.mockResolvedValue(1);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(tenantId, {});
 
       expect(result).toEqual({
         data: sellRequests,
@@ -81,7 +83,7 @@ describe('AdminSellRequestsService', () => {
       });
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {},
+          where: { tenantId },
           skip: 0,
           take: 20,
           orderBy: { createdAt: 'desc' },
@@ -91,7 +93,7 @@ describe('AdminSellRequestsService', () => {
           },
         }),
       );
-      expect(prisma.sellRequest.count).toHaveBeenCalledWith({ where: {} });
+      expect(prisma.sellRequest.count).toHaveBeenCalledWith({ where: { tenantId } });
     });
 
     // 3. 상태 필터를 적용한다
@@ -99,15 +101,15 @@ describe('AdminSellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(0);
 
-      await service.findAll({ status: SellRequestStatus.PENDING });
+      await service.findAll(tenantId, { status: SellRequestStatus.PENDING });
 
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { status: SellRequestStatus.PENDING },
+          where: { tenantId, status: SellRequestStatus.PENDING },
         }),
       );
       expect(prisma.sellRequest.count).toHaveBeenCalledWith({
-        where: { status: SellRequestStatus.PENDING },
+        where: { tenantId, status: SellRequestStatus.PENDING },
       });
     });
 
@@ -116,11 +118,12 @@ describe('AdminSellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(0);
 
-      await service.findAll({ search: 'iPhone' });
+      await service.findAll(tenantId, { search: 'iPhone' });
 
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
+            tenantId,
             OR: [
               { modelName: { contains: 'iPhone', mode: 'insensitive' } },
               {
@@ -140,7 +143,7 @@ describe('AdminSellRequestsService', () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(50);
 
-      const result = await service.findAll({ page: 3, limit: 10 });
+      const result = await service.findAll(tenantId, { page: 3, limit: 10 });
 
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -257,7 +260,7 @@ describe('AdminSellRequestsService', () => {
         status: SellRequestStatus.QUOTED,
       });
 
-      const result = await service.createQuote('sell-req-1', {
+      const result = await service.createQuote(tenantId, 'sell-req-1', {
         price: 500000,
         notes: '상태 양호',
       });
@@ -266,7 +269,7 @@ describe('AdminSellRequestsService', () => {
       expect(prisma.sellQuote.create).toHaveBeenCalledWith({
         data: {
           sellRequestId: 'sell-req-1',
-          tenantId: 'default-tenant',
+          tenantId,
           price: 500000,
           notes: '상태 양호',
         },
@@ -282,7 +285,7 @@ describe('AdminSellRequestsService', () => {
       prisma.sellRequest.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.createQuote('non-existent', { price: 500000 }),
+        service.createQuote(tenantId, 'non-existent', { price: 500000 }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -294,7 +297,7 @@ describe('AdminSellRequestsService', () => {
       });
 
       await expect(
-        service.createQuote('sell-req-1', { price: 500000 }),
+        service.createQuote(tenantId, 'sell-req-1', { price: 500000 }),
       ).rejects.toThrow(BadRequestException);
     });
   });

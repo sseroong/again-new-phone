@@ -7,7 +7,7 @@ import { DashboardQueryDto } from './dto';
 export class AdminDashboardService {
   constructor(private prisma: PrismaService) {}
 
-  async getStats(query: DashboardQueryDto) {
+  async getStats(tenantId: string, query: DashboardQueryDto) {
     const dateFilter = this.buildDateFilter(query);
 
     const [
@@ -21,6 +21,7 @@ export class AdminDashboardService {
       // 총 주문 수
       this.prisma.order.count({
         where: {
+          tenantId,
           ...dateFilter,
           status: { not: OrderStatus.CANCELLED },
         },
@@ -30,6 +31,7 @@ export class AdminDashboardService {
       this.prisma.payment.aggregate({
         _sum: { amount: true },
         where: {
+          tenantId,
           status: PaymentStatus.COMPLETED,
           ...(dateFilter.createdAt ? { paidAt: dateFilter.createdAt } : {}),
         },
@@ -42,11 +44,12 @@ export class AdminDashboardService {
 
       // 대기 중인 판매접수 수
       this.prisma.sellRequest.count({
-        where: { status: SellRequestStatus.PENDING },
+        where: { tenantId, status: SellRequestStatus.PENDING },
       }),
 
       // 최근 주문 5건
       this.prisma.order.findMany({
+        where: { tenantId },
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -63,6 +66,7 @@ export class AdminDashboardService {
 
       // 최근 판매접수 5건
       this.prisma.sellRequest.findMany({
+        where: { tenantId },
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: {

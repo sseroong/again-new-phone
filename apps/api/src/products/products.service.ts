@@ -7,7 +7,7 @@ import { ProductQueryDto } from './dto';
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: ProductQueryDto) {
+  async findAll(tenantId: string, query: ProductQueryDto) {
     const {
       category,
       brand,
@@ -25,6 +25,7 @@ export class ProductsService {
     } = query;
 
     const where: Prisma.ProductWhereInput = {
+      tenantId,
       status,
     };
 
@@ -104,7 +105,7 @@ export class ProductsService {
     };
   }
 
-  async findOne(id: string) {
+  async findOne(tenantId: string, id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
@@ -176,7 +177,7 @@ export class ProductsService {
     return model.variants;
   }
 
-  async getSimilarProducts(productId: string, limit = 4) {
+  async getSimilarProducts(tenantId: string, productId: string, limit = 4) {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
       include: { model: true },
@@ -189,6 +190,7 @@ export class ProductsService {
     // 같은 모델, 다른 상품
     const similarProducts = await this.prisma.product.findMany({
       where: {
+        tenantId,
         modelId: product.modelId,
         id: { not: productId },
         status: ProductStatus.AVAILABLE,
@@ -205,6 +207,7 @@ export class ProductsService {
     if (similarProducts.length < limit) {
       const additionalProducts = await this.prisma.product.findMany({
         where: {
+          tenantId,
           categoryId: product.categoryId,
           id: { notIn: [productId, ...similarProducts.map((p) => p.id)] },
           status: ProductStatus.AVAILABLE,
@@ -223,9 +226,9 @@ export class ProductsService {
     return similarProducts;
   }
 
-  async getPopularProducts(limit = 10) {
+  async getPopularProducts(tenantId: string, limit = 10) {
     return this.prisma.product.findMany({
-      where: { status: ProductStatus.AVAILABLE },
+      where: { tenantId, status: ProductStatus.AVAILABLE },
       include: {
         category: true,
         model: true,
@@ -236,9 +239,9 @@ export class ProductsService {
     });
   }
 
-  async getNewArrivals(limit = 10) {
+  async getNewArrivals(tenantId: string, limit = 10) {
     return this.prisma.product.findMany({
-      where: { status: ProductStatus.AVAILABLE },
+      where: { tenantId, status: ProductStatus.AVAILABLE },
       include: {
         category: true,
         model: true,

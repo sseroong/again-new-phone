@@ -12,6 +12,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentTenant } from '../tenant/tenant.decorator';
 import { AdminSellRequestsService } from './admin-sell-requests.service';
 import {
   AdminSellRequestQueryDto,
@@ -29,8 +30,8 @@ export class AdminSellRequestsController {
 
   @Get()
   @ApiOperation({ summary: '전체 판매접수 목록 (관리자)' })
-  findAll(@Query() query: AdminSellRequestQueryDto) {
-    return this.sellRequestsService.findAll(query);
+  findAll(@CurrentTenant() tenantId: string, @Query() query: AdminSellRequestQueryDto) {
+    return this.sellRequestsService.findAll(tenantId, query);
   }
 
   @Get(':id')
@@ -47,7 +48,7 @@ export class AdminSellRequestsController {
 
   @Post(':id/quotes')
   @ApiOperation({ summary: '견적 생성' })
-  createQuote(@Param('id') id: string, @Body() dto: AdminCreateQuoteDto) {
-    return this.sellRequestsService.createQuote(id, dto);
+  createQuote(@CurrentTenant() tenantId: string, @Param('id') id: string, @Body() dto: AdminCreateQuoteDto) {
+    return this.sellRequestsService.createQuote(tenantId, id, dto);
   }
 }
