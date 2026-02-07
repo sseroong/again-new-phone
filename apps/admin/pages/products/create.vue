@@ -4,7 +4,10 @@ useHead({ title: '상품 등록' });
 
 const toast = useToast();
 const router = useRouter();
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBaseUrl as string;
 const apiFetch = useAdminFetch();
+const authStore = useAuthStore();
 
 // 카테고리/모델/바리언트 목록 로드
 const { data: categories } = useAdminApi<any[]>('/products/categories');
@@ -48,8 +51,9 @@ const form = reactive({
   discountRate: 0,
 });
 
-const imageUrl = ref('');
 const isSubmitting = ref(false);
+const isUploading = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const gradeOptions = [
   { label: '새상품(NEW)', value: 'NEW' },
@@ -64,10 +68,70 @@ const gradeOptions = [
   { label: 'E', value: 'E' },
 ];
 
-function addImage() {
-  if (imageUrl.value.trim()) {
-    form.images.push(imageUrl.value.trim());
-    imageUrl.value = '';
+function getImageUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  return `${apiBase}${path}`;
+}
+
+function triggerFileInput() {
+  fileInput.value?.click();
+}
+
+async function handleFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const files = input.files;
+  if (!files?.length) return;
+
+  const remaining = 10 - form.images.length;
+  if (files.length > remaining) {
+    toast.add({ title: `최대 10장까지 업로드 가능합니다. (현재 ${form.images.length}장)`, color: 'red' });
+    return;
+  }
+
+  await uploadFiles(Array.from(files));
+  input.value = '';
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault();
+  const files = event.dataTransfer?.files;
+  if (!files?.length) return;
+
+  const remaining = 10 - form.images.length;
+  if (files.length > remaining) {
+    toast.add({ title: `최대 10장까지 업로드 가능합니다. (현재 ${form.images.length}장)`, color: 'red' });
+    return;
+  }
+
+  uploadFiles(Array.from(files));
+}
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault();
+}
+
+async function uploadFiles(files: File[]) {
+  isUploading.value = true;
+  try {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('files', file);
+    }
+
+    const data = await $fetch<{ urls: string[] }>(`${apiBase}/api/upload/images`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authStore.tokens?.accessToken}`,
+      },
+      body: formData,
+    });
+
+    form.images.push(...data.urls);
+    toast.add({ title: `${data.urls.length}장 업로드 완료`, color: 'green' });
+  } catch (error: any) {
+    toast.add({ title: error?.data?.message || '이미지 업로드에 실패했습니다.', color: 'red' });
+  } finally {
+    isUploading.value = false;
   }
 }
 
@@ -190,21 +254,60 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <!-- 이미지 URL -->
+      <!-- 이미지 업로드 -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">이미지 URL</label>
-        <div class="flex gap-2 mb-2">
-          <UInput v-model="imageUrl" placeholder="https://..." class="flex-1" @keyup.enter.prevent="addImage" />
-          <UButton type="button" label="추가" variant="outline" @click="addImage" />
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          상품 이미지 (최대 10장)
+        </label>
+
+        <!-- 드래그 앤 드롭 영역 -->
+        <div
+          class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition-colors"
+          :class="{ 'opacity-50 pointer-events-none': isUploading || form.images.length >= 10 }"
+          @click="triggerFileInput"
+          @drop="handleDrop"
+          @dragover="handleDragOver"
+        >
+          <UIcon v-if="isUploading" name="i-heroicons-arrow-path" class="w-8 h-8 text-gray-400 mx-auto mb-2 animate-spin" />
+          <UIcon v-else name="i-heroicons-cloud-arrow-up" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
+          <p class="text-sm text-gray-600">
+            <template v-if="isUploading">업로드 중...</template>
+            <template v-else-if="form.images.length >= 10">최대 이미지 수에 도달했습니다</template>
+            <template v-else>
+              클릭하거나 파일을 드래그하여 업로드
+              <span class="block text-xs text-gray-400 mt-1">JPEG, PNG, WebP, GIF (최대 5MB)</span>
+            </template>
+          </p>
         </div>
-        <div v-if="form.images.length" class="flex flex-wrap gap-2">
+
+        <input
+          ref="fileInput"
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          class="hidden"
+          @change="handleFileSelect"
+        />
+
+        <!-- 이미지 미리보기 -->
+        <div v-if="form.images.length" class="grid grid-cols-5 gap-3 mt-4">
           <div
             v-for="(img, i) in form.images"
             :key="i"
-            class="flex items-center gap-1 bg-gray-100 rounded px-2 py-1 text-xs"
+            class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200"
           >
-            <span class="max-w-[200px] truncate">{{ img }}</span>
-            <UButton type="button" icon="i-heroicons-x-mark" size="2xs" variant="ghost" color="red" @click="removeImage(i)" />
+            <img
+              :src="getImageUrl(img)"
+              :alt="`상품 이미지 ${i + 1}`"
+              class="w-full h-full object-cover"
+            />
+            <button
+              type="button"
+              class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+              @click="removeImage(i)"
+            >
+              &times;
+            </button>
           </div>
         </div>
       </div>

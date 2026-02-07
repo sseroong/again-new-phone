@@ -16,6 +16,7 @@ const navItems = [
 const userMenuItems = [
   [
     { label: '나의 거래내역', to: '/my/transactions', icon: 'i-heroicons-document-text' },
+    { label: '나의 리뷰', to: '/my/reviews', icon: 'i-heroicons-chat-bubble-left-right' },
     { label: '내 기기 관리', to: '/my/devices', icon: 'i-heroicons-device-phone-mobile' },
   ],
   [

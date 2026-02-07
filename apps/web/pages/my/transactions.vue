@@ -30,8 +30,59 @@ const { data: sellData, pending: sellPending } = await useAsyncData(
   () => $fetch<any>(`${apiBase}/sell-requests`, { headers: authHeaders.value }),
 );
 
+// 나의 리뷰 (중복 작성 방지)
+const { data: myReviewsData, refresh: refreshReviews } = await useAsyncData(
+  'my-reviews-for-check',
+  () => $fetch<any>(`${apiBase}/reviews/my`, {
+    headers: authHeaders.value,
+    params: { limit: 100 },
+  }),
+);
+
 const orders = computed(() => ordersData.value?.data || ordersData.value || []);
 const sellRequests = computed(() => sellData.value?.data || sellData.value || []);
+
+const myReviews = computed(() => myReviewsData.value?.data || myReviewsData.value || []);
+const reviewedOrderIds = computed(() =>
+  myReviews.value.filter((r: any) => r.orderId).map((r: any) => r.orderId),
+);
+const reviewedSellIds = computed(() =>
+  myReviews.value.filter((r: any) => r.sellRequestId).map((r: any) => r.sellRequestId),
+);
+
+// 리뷰 작성 모달
+const showReviewModal = ref(false);
+const reviewTarget = reactive({
+  type: 'BUY' as 'BUY' | 'SELL',
+  orderId: undefined as string | undefined,
+  sellRequestId: undefined as string | undefined,
+  productModel: '',
+  quotesReceived: undefined as number | undefined,
+});
+
+function openReviewModal(type: 'BUY' | 'SELL', item: any) {
+  reviewTarget.type = type;
+  if (type === 'BUY') {
+    reviewTarget.orderId = item.id;
+    reviewTarget.sellRequestId = undefined;
+    reviewTarget.productModel = [
+      item.items?.[0]?.product?.model?.name,
+      item.items?.[0]?.product?.variant?.storage,
+      item.items?.[0]?.product?.variant?.color,
+    ].filter(Boolean).join(' ') || '상품';
+    reviewTarget.quotesReceived = undefined;
+  } else {
+    reviewTarget.sellRequestId = item.id;
+    reviewTarget.orderId = undefined;
+    reviewTarget.productModel = [item.modelName, item.storage].filter(Boolean).join(' ') || '기기';
+    reviewTarget.quotesReceived = item.quotes?.length;
+  }
+  showReviewModal.value = true;
+}
+
+function onReviewCreated() {
+  refreshReviews();
+}
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   PENDING_PAYMENT: { label: '결제 대기', color: 'yellow' },
@@ -132,6 +183,22 @@ const getStatus = (status: string) => statusLabels[status] || { label: status, c
               </div>
               <p class="font-bold text-lg">{{ order.totalAmount?.toLocaleString() }}원</p>
             </div>
+
+            <!-- 리뷰 작성 버튼 -->
+            <div v-if="order.status === 'COMPLETED'" class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+              <UButton
+                v-if="!reviewedOrderIds.includes(order.id)"
+                size="xs"
+                variant="outline"
+                icon="i-heroicons-pencil-square"
+                label="리뷰 작성"
+                @click="openReviewModal('BUY', order)"
+              />
+              <span v-else class="text-xs text-gray-400 flex items-center gap-1">
+                <UIcon name="i-heroicons-check-circle" class="w-4 h-4 text-green-500" />
+                리뷰 작성 완료
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -184,9 +251,37 @@ const getStatus = (status: string) => statusLabels[status] || { label: status, c
                 <p v-if="!sell.finalPrice" class="text-xs text-gray-400">예상 견적</p>
               </div>
             </div>
+
+            <!-- 리뷰 작성 버튼 -->
+            <div v-if="sell.status === 'COMPLETED'" class="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+              <UButton
+                v-if="!reviewedSellIds.includes(sell.id)"
+                size="xs"
+                variant="outline"
+                icon="i-heroicons-pencil-square"
+                label="리뷰 작성"
+                @click="openReviewModal('SELL', sell)"
+              />
+              <span v-else class="text-xs text-gray-400 flex items-center gap-1">
+                <UIcon name="i-heroicons-check-circle" class="w-4 h-4 text-green-500" />
+                리뷰 작성 완료
+              </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 리뷰 작성 모달 -->
+    <ReviewWriteModal
+      v-model="showReviewModal"
+      :type="reviewTarget.type"
+      :order-id="reviewTarget.orderId"
+      :sell-request-id="reviewTarget.sellRequestId"
+      :product-model="reviewTarget.productModel"
+      :quotes-received="reviewTarget.quotesReceived"
+      @review-created="onReviewCreated"
+    />
+
   </div>
 </template>

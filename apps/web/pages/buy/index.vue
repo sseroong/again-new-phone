@@ -21,6 +21,11 @@ useHead({
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBaseUrl as string;
 
+function getImageUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  return `${apiBase}${path}`;
+}
+
 // 필터 상태
 const selectedCategory = ref<DeviceCategory | null>(null);
 const selectedBrands = ref<Brand[]>([]);
@@ -271,7 +276,13 @@ watch(selectedCategory, () => {
             >
               <!-- 상품 이미지 -->
               <div class="aspect-square bg-gray-100 relative overflow-hidden flex items-center justify-center">
-                <UIcon name="i-heroicons-device-phone-mobile" class="w-16 h-16 text-gray-300" />
+                <img
+                  v-if="product.images?.length"
+                  :src="getImageUrl(product.images[0])"
+                  :alt="product.model?.name"
+                  class="w-full h-full object-cover"
+                />
+                <UIcon v-else name="i-heroicons-device-phone-mobile" class="w-16 h-16 text-gray-300" />
                 <div class="absolute top-2 left-2 flex flex-wrap gap-1">
                   <span class="trust-badge trust-badge-quality">품질보증</span>
                   <span class="trust-badge trust-badge-verified">실물인증</span>
