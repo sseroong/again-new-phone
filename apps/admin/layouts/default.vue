@@ -10,6 +10,12 @@ const sidebarItems = [
   { label: '회원 관리', to: '/users', icon: 'i-heroicons-users' },
 ];
 
+const superAdminItems = [
+  { label: '글로벌 대시보드', to: '/super-admin', icon: 'i-heroicons-chart-bar-square' },
+  { label: '테넌트 관리', to: '/super-admin/tenants', icon: 'i-heroicons-building-office-2' },
+  { label: '전체 사용자', to: '/super-admin/users', icon: 'i-heroicons-user-group' },
+];
+
 const isActive = (to: string) => {
   if (to === '/') return route.path === '/';
   return route.path.startsWith(to);
@@ -51,6 +57,25 @@ const sidebarCollapsed = ref(false);
           <UIcon :name="item.icon" class="w-5 h-5 flex-shrink-0" />
           <span v-if="!sidebarCollapsed" class="whitespace-nowrap">{{ item.label }}</span>
         </NuxtLink>
+        <!-- Super Admin Section -->
+        <template v-if="authStore.user?.role === 'SUPER_ADMIN'">
+          <div class="border-t border-gray-800 my-3 mx-2" />
+          <p v-if="!sidebarCollapsed" class="px-3 text-xs text-gray-500 uppercase tracking-wider mb-1">Super Admin</p>
+          <NuxtLink
+            v-for="item in superAdminItems"
+            :key="item.to"
+            :to="item.to"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            :class="[
+              isActive(item.to)
+                ? 'bg-red-600 text-white'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            ]"
+          >
+            <UIcon :name="item.icon" class="w-5 h-5 flex-shrink-0" />
+            <span v-if="!sidebarCollapsed" class="whitespace-nowrap">{{ item.label }}</span>
+          </NuxtLink>
+        </template>
       </nav>
     </aside>
 
