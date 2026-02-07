@@ -9,6 +9,7 @@ import { SellRequestsModule } from './sell-requests/sell-requests.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { PricesModule } from './prices/prices.module';
 import { AdminModule } from './admin/admin.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
 import { UploadModule } from './upload/upload.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './tenant/tenant.module';
@@ -38,6 +39,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     ReviewsModule,
     PricesModule,
     AdminModule,
+    SuperAdminModule,
     UploadModule,
   ],
   providers: [

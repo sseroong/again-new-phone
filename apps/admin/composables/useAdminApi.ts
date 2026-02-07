@@ -12,11 +12,15 @@ export function useAdminApi<T>(
     key: typeof url === 'string' ? url : undefined,
 
     onRequest({ options }) {
+      const headers = new Headers(options.headers);
       if (authStore.tokens?.accessToken) {
-        const headers = new Headers(options.headers);
         headers.set('Authorization', `Bearer ${authStore.tokens.accessToken}`);
-        options.headers = headers;
       }
+      const tenantStore = useTenantStore();
+      if (tenantStore.selectedTenantId) {
+        headers.set('X-Tenant-ID', tenantStore.selectedTenantId);
+      }
+      options.headers = headers;
     },
 
     onResponseError({ response }) {
@@ -43,6 +47,10 @@ export function useAdminFetch() {
     const headers = new Headers(options.headers);
     if (authStore.tokens?.accessToken) {
       headers.set('Authorization', `Bearer ${authStore.tokens.accessToken}`);
+    }
+    const tenantStore = useTenantStore();
+    if (tenantStore.selectedTenantId) {
+      headers.set('X-Tenant-ID', tenantStore.selectedTenantId);
     }
     headers.set('Content-Type', 'application/json');
 
