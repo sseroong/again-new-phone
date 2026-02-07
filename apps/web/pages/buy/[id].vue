@@ -28,6 +28,27 @@ useHead({
   title: product.value ? `${product.value.model?.name}` : '상품 상세',
 });
 
+// 이미지 갤러리
+const selectedImageIndex = ref(0);
+
+const productImages = computed(() => {
+  return product.value?.images?.length ? product.value.images : [];
+});
+
+const hasImages = computed(() => productImages.value.length > 0);
+
+function getImageUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  return `${apiBase}${path}`;
+}
+
+function getSimilarImageUrl(similar: any): string | null {
+  if (similar.images?.length) {
+    return getImageUrl(similar.images[0]);
+  }
+  return null;
+}
+
 // 구매하기 → 체크아웃 페이지로 이동
 const orderError = ref('');
 
@@ -82,10 +103,34 @@ const gradeInfo = computed(() => {
         <div class="grid lg:grid-cols-2 gap-8">
           <!-- 상품 이미지 -->
           <div class="bg-white rounded-xl p-8">
-            <div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-              <UIcon name="i-heroicons-device-phone-mobile" class="w-32 h-32 text-gray-300" />
+            <!-- 메인 이미지 -->
+            <div class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+              <img
+                v-if="hasImages"
+                :src="getImageUrl(productImages[selectedImageIndex])"
+                :alt="`${product.model?.name} 이미지`"
+                class="w-full h-full object-contain"
+              />
+              <UIcon v-else name="i-heroicons-device-phone-mobile" class="w-32 h-32 text-gray-300" />
             </div>
-            <div class="flex gap-2 mt-4">
+
+            <!-- 썸네일 목록 -->
+            <div v-if="hasImages && productImages.length > 1" class="flex gap-2 mt-4">
+              <button
+                v-for="(img, i) in productImages"
+                :key="i"
+                class="w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-colors"
+                :class="selectedImageIndex === i ? 'border-primary-600' : 'border-gray-200 hover:border-gray-300'"
+                @click="selectedImageIndex = i"
+              >
+                <img
+                  :src="getImageUrl(img)"
+                  :alt="`썸네일 ${i + 1}`"
+                  class="w-full h-full object-cover"
+                />
+              </button>
+            </div>
+            <div v-else-if="!hasImages" class="flex gap-2 mt-4">
               <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-primary-600">
                 <UIcon name="i-heroicons-device-phone-mobile" class="w-8 h-8 text-gray-300" />
               </div>
@@ -188,8 +233,14 @@ const gradeInfo = computed(() => {
               :to="`/buy/${similar.id}`"
               class="product-card group"
             >
-              <div class="aspect-square bg-gray-100 flex items-center justify-center">
-                <UIcon name="i-heroicons-device-phone-mobile" class="w-12 h-12 text-gray-300" />
+              <div class="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden">
+                <img
+                  v-if="getSimilarImageUrl(similar)"
+                  :src="getSimilarImageUrl(similar)!"
+                  :alt="similar.model?.name"
+                  class="w-full h-full object-cover"
+                />
+                <UIcon v-else name="i-heroicons-device-phone-mobile" class="w-12 h-12 text-gray-300" />
               </div>
               <div class="p-3 space-y-1">
                 <p class="font-medium text-sm group-hover:text-primary-600">

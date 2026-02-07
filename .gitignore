@@ -31,6 +31,9 @@ pnpm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
+blob-report/
 
 # Prisma
 prisma/migrations/
@@ -47,6 +50,9 @@ docker-compose.override.yml
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Uploaded files
+uploads/
 
 # Misc
 *.tsbuildinfo

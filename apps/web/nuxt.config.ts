@@ -52,5 +52,23 @@ export default defineNuxtConfig({
     strict: true,
   },
 
+  vite: {
+    plugins: [
+      {
+        name: 'resolve-app-manifest',
+        resolveId(id: string) {
+          if (id === '#app-manifest') {
+            return '\0virtual:app-manifest';
+          }
+        },
+        load(id: string) {
+          if (id === '\0virtual:app-manifest') {
+            return 'export default {}';
+          }
+        },
+      },
+    ],
+  },
+
   compatibilityDate: '2024-01-01',
 });
