@@ -14,11 +14,11 @@ import {
 export class AdminProductsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: AdminProductQueryDto) {
+  async findAll(tenantId: string, query: AdminProductQueryDto) {
     const { category, brand, grade, status, search, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.ProductWhereInput = {};
+    const where: Prisma.ProductWhereInput = { tenantId };
 
     if (category) where.category = { type: category };
     if (brand) where.model = { brand };
@@ -79,10 +79,10 @@ export class AdminProductsService {
     return product;
   }
 
-  async create(dto: AdminCreateProductDto) {
+  async create(tenantId: string, dto: AdminCreateProductDto) {
     return this.prisma.product.create({
       data: {
-        tenantId: 'default-tenant',
+        tenantId,
         categoryId: dto.categoryId,
         modelId: dto.modelId,
         variantId: dto.variantId,

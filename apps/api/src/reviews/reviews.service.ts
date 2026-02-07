@@ -11,7 +11,7 @@ import { CreateReviewDto, ReviewQueryDto } from './dto';
 export class ReviewsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, dto: CreateReviewDto) {
+  async create(tenantId: string, userId: string, dto: CreateReviewDto) {
     // 리뷰 유형에 따른 검증
     if (dto.type === ReviewType.BUY && dto.orderId) {
       const order = await this.prisma.order.findFirst({
@@ -58,7 +58,7 @@ export class ReviewsService {
     return this.prisma.review.create({
       data: {
         userId,
-        tenantId: 'default-tenant',
+        tenantId,
         type: dto.type,
         orderId: dto.orderId,
         sellRequestId: dto.sellRequestId,
@@ -80,7 +80,7 @@ export class ReviewsService {
     });
   }
 
-  async findAll(query: ReviewQueryDto) {
+  async findAll(tenantId: string, query: ReviewQueryDto) {
     const {
       type,
       search,
@@ -91,6 +91,7 @@ export class ReviewsService {
     } = query;
 
     const where: Prisma.ReviewWhereInput = {
+      tenantId,
       isPublished: true,
     };
 
@@ -231,18 +232,18 @@ export class ReviewsService {
     return { message: '리뷰가 삭제되었습니다.' };
   }
 
-  async getStats() {
+  async getStats(tenantId: string) {
     const [totalReviews, avgRating, sellReviews, buyReviews] = await Promise.all([
-      this.prisma.review.count({ where: { isPublished: true } }),
+      this.prisma.review.count({ where: { tenantId, isPublished: true } }),
       this.prisma.review.aggregate({
-        where: { isPublished: true },
+        where: { tenantId, isPublished: true },
         _avg: { rating: true },
       }),
       this.prisma.review.count({
-        where: { isPublished: true, type: ReviewType.SELL },
+        where: { tenantId, isPublished: true, type: ReviewType.SELL },
       }),
       this.prisma.review.count({
-        where: { isPublished: true, type: ReviewType.BUY },
+        where: { tenantId, isPublished: true, type: ReviewType.BUY },
       }),
     ]);
 

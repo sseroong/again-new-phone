@@ -19,6 +19,7 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto, OrderQueryDto, ConfirmPaymentDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentTenant } from '../tenant/tenant.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('orders')
@@ -33,20 +34,22 @@ export class OrdersController {
   @ApiResponse({ status: 201, description: '주문 생성 성공' })
   @ApiResponse({ status: 400, description: '잘못된 요청' })
   async create(
+    @CurrentTenant() tenantId: string,
     @CurrentUser('id') userId: string,
     @Body() dto: CreateOrderDto,
   ) {
-    return this.ordersService.create(userId, dto);
+    return this.ordersService.create(tenantId, userId, dto);
   }
 
   @Get()
   @ApiOperation({ summary: '내 주문 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   async findAll(
+    @CurrentTenant() tenantId: string,
     @CurrentUser('id') userId: string,
     @Query() query: OrderQueryDto,
   ) {
-    return this.ordersService.findAll(userId, query);
+    return this.ordersService.findAll(tenantId, userId, query);
   }
 
   @Get(':id')

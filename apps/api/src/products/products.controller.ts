@@ -14,6 +14,7 @@ import {
 import { ProductsService } from './products.service';
 import { ProductQueryDto } from './dto';
 import { Public } from '../auth/decorators/public.decorator';
+import { CurrentTenant } from '../tenant/tenant.decorator';
 
 @ApiTags('products')
 @Controller('products')
@@ -24,8 +25,8 @@ export class ProductsController {
   @Get()
   @ApiOperation({ summary: '상품 목록 조회' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async findAll(@Query() query: ProductQueryDto) {
-    return this.productsService.findAll(query);
+  async findAll(@CurrentTenant() tenantId: string, @Query() query: ProductQueryDto) {
+    return this.productsService.findAll(tenantId, query);
   }
 
   @Public()
@@ -63,8 +64,8 @@ export class ProductsController {
   @ApiOperation({ summary: '인기 상품 조회' })
   @ApiQuery({ name: 'limit', required: false, description: '조회 개수' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getPopular(@Query('limit') limit?: number) {
-    return this.productsService.getPopularProducts(limit || 10);
+  async getPopular(@CurrentTenant() tenantId: string, @Query('limit') limit?: number) {
+    return this.productsService.getPopularProducts(tenantId, limit || 10);
   }
 
   @Public()
@@ -72,8 +73,8 @@ export class ProductsController {
   @ApiOperation({ summary: '신규 상품 조회' })
   @ApiQuery({ name: 'limit', required: false, description: '조회 개수' })
   @ApiResponse({ status: 200, description: '조회 성공' })
-  async getNew(@Query('limit') limit?: number) {
-    return this.productsService.getNewArrivals(limit || 10);
+  async getNew(@CurrentTenant() tenantId: string, @Query('limit') limit?: number) {
+    return this.productsService.getNewArrivals(tenantId, limit || 10);
   }
 
   @Public()
@@ -82,8 +83,8 @@ export class ProductsController {
   @ApiParam({ name: 'id', description: '상품 ID' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   @ApiResponse({ status: 404, description: '상품을 찾을 수 없음' })
-  async findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  async findOne(@CurrentTenant() tenantId: string, @Param('id') id: string) {
+    return this.productsService.findOne(tenantId, id);
   }
 
   @Public()
@@ -93,9 +94,10 @@ export class ProductsController {
   @ApiQuery({ name: 'limit', required: false, description: '조회 개수' })
   @ApiResponse({ status: 200, description: '조회 성공' })
   async getSimilar(
+    @CurrentTenant() tenantId: string,
     @Param('id') id: string,
     @Query('limit') limit?: number,
   ) {
-    return this.productsService.getSimilarProducts(id, limit || 4);
+    return this.productsService.getSimilarProducts(tenantId, id, limit || 4);
   }
 }

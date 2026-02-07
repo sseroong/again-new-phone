@@ -12,6 +12,8 @@ describe('AdminDashboardService', () => {
   let service: AdminDashboardService;
   let prisma: MockPrismaService;
 
+
+  const tenantId = 'default-tenant';
   const mockRecentOrder = {
     id: 'order-uuid-1',
     userId: 'user-uuid-1',
@@ -105,11 +107,12 @@ describe('AdminDashboardService', () => {
       setupDefaultMocks();
 
       const query: DashboardQueryDto = {};
-      const result = await service.getStats(query);
+      const result = await service.getStats(tenantId, query);
 
       // 총 주문 수 조회 - 취소 주문 제외
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
+          tenantId,
           status: { not: OrderStatus.CANCELLED },
         },
       });
@@ -118,6 +121,7 @@ describe('AdminDashboardService', () => {
       expect(prisma.payment.aggregate).toHaveBeenCalledWith({
         _sum: { amount: true },
         where: {
+          tenantId,
           status: PaymentStatus.COMPLETED,
         },
       });
@@ -129,11 +133,12 @@ describe('AdminDashboardService', () => {
 
       // 대기 중인 판매접수 수 조회
       expect(prisma.sellRequest.count).toHaveBeenCalledWith({
-        where: { status: SellRequestStatus.PENDING },
+        where: { tenantId, status: SellRequestStatus.PENDING },
       });
 
       // 최근 주문 5건 조회
       expect(prisma.order.findMany).toHaveBeenCalledWith({
+        where: { tenantId },
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -150,6 +155,7 @@ describe('AdminDashboardService', () => {
 
       // 최근 판매접수 5건 조회
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith({
+        where: { tenantId },
         take: 5,
         orderBy: { createdAt: 'desc' },
         include: {
@@ -177,7 +183,7 @@ describe('AdminDashboardService', () => {
         startDate: '2024-06-01',
         endDate: '2024-06-30',
       };
-      await service.getStats(query);
+      await service.getStats(tenantId, query);
 
       const expectedDateFilter = {
         gte: new Date('2024-06-01'),
@@ -187,6 +193,7 @@ describe('AdminDashboardService', () => {
       // order.count에 createdAt 필터가 적용되어야 한다
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
+          tenantId,
           createdAt: expectedDateFilter,
           status: { not: OrderStatus.CANCELLED },
         },
@@ -196,6 +203,7 @@ describe('AdminDashboardService', () => {
       expect(prisma.payment.aggregate).toHaveBeenCalledWith({
         _sum: { amount: true },
         where: {
+          tenantId,
           status: PaymentStatus.COMPLETED,
           paidAt: expectedDateFilter,
         },
@@ -206,10 +214,11 @@ describe('AdminDashboardService', () => {
       setupDefaultMocks();
 
       const query: DashboardQueryDto = { startDate: '2024-06-01' };
-      await service.getStats(query);
+      await service.getStats(tenantId, query);
 
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
+          tenantId,
           createdAt: { gte: new Date('2024-06-01') },
           status: { not: OrderStatus.CANCELLED },
         },
@@ -218,6 +227,7 @@ describe('AdminDashboardService', () => {
       expect(prisma.payment.aggregate).toHaveBeenCalledWith({
         _sum: { amount: true },
         where: {
+          tenantId,
           status: PaymentStatus.COMPLETED,
           paidAt: { gte: new Date('2024-06-01') },
         },
@@ -228,10 +238,11 @@ describe('AdminDashboardService', () => {
       setupDefaultMocks();
 
       const query: DashboardQueryDto = { endDate: '2024-06-30' };
-      await service.getStats(query);
+      await service.getStats(tenantId, query);
 
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
+          tenantId,
           createdAt: { lte: new Date('2024-06-30T23:59:59.999Z') },
           status: { not: OrderStatus.CANCELLED },
         },
@@ -240,6 +251,7 @@ describe('AdminDashboardService', () => {
       expect(prisma.payment.aggregate).toHaveBeenCalledWith({
         _sum: { amount: true },
         where: {
+          tenantId,
           status: PaymentStatus.COMPLETED,
           paidAt: { lte: new Date('2024-06-30T23:59:59.999Z') },
         },
@@ -257,7 +269,7 @@ describe('AdminDashboardService', () => {
       });
 
       const query: DashboardQueryDto = {};
-      const result = await service.getStats(query);
+      const result = await service.getStats(tenantId, query);
 
       expect(result.stats.totalRevenue).toBe(0);
       expect(result.stats.totalOrders).toBe(0);
@@ -302,7 +314,7 @@ describe('AdminDashboardService', () => {
       });
 
       const query: DashboardQueryDto = {};
-      const result = await service.getStats(query);
+      const result = await service.getStats(tenantId, query);
 
       expect(result.recentOrders).toHaveLength(3);
       expect(result.recentOrders).toEqual(multipleOrders);
@@ -335,7 +347,7 @@ describe('AdminDashboardService', () => {
       setupDefaultMocks();
 
       const query: DashboardQueryDto = {};
-      await service.getStats(query);
+      await service.getStats(tenantId, query);
 
       expect(prisma.order.count).toHaveBeenCalledTimes(1);
       expect(prisma.payment.aggregate).toHaveBeenCalledTimes(1);
