@@ -58,6 +58,7 @@ export class ReviewsService {
     return this.prisma.review.create({
       data: {
         userId,
+        tenantId: 'default-tenant',
         type: dto.type,
         orderId: dto.orderId,
         sellRequestId: dto.sellRequestId,

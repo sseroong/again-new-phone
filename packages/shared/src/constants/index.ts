@@ -190,6 +190,13 @@ export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZE_OPTIONS = [12, 24, 48, 96];
 
 // =============================================
+// 테넌트
+// =============================================
+
+export const TENANT_HEADER = 'x-tenant-id';
+export const DEFAULT_TENANT_ID = 'default-tenant';
+
+// =============================================
 // API
 // =============================================
 

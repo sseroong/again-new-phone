@@ -19,6 +19,7 @@ export class SellRequestsService {
     return this.prisma.sellRequest.create({
       data: {
         userId,
+        tenantId: 'default-tenant',
         category: dto.category,
         brand: dto.brand,
         modelName: dto.modelName,

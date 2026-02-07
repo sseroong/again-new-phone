@@ -123,6 +123,7 @@ export class AdminSellRequestsService {
         data: {
           sellRequestId: id,
           price: dto.price,
+          tenantId: 'default-tenant',
           notes: dto.notes,
         },
       });

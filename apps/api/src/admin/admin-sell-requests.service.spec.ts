@@ -266,6 +266,7 @@ describe('AdminSellRequestsService', () => {
       expect(prisma.sellQuote.create).toHaveBeenCalledWith({
         data: {
           sellRequestId: 'sell-req-1',
+          tenantId: 'default-tenant',
           price: 500000,
           notes: '상태 양호',
         },

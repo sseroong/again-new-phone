@@ -48,6 +48,29 @@ export interface AuthTokens {
 }
 
 // =============================================
+// 테넌트 관련 타입
+// =============================================
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  domain?: string;
+  settings: Record<string, unknown>;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserTenant {
+  userId: string;
+  tenantId: string;
+  role: UserRole;
+  isActive: boolean;
+  joinedAt: Date;
+}
+
+// =============================================
 // 상품 관련 타입
 // =============================================
 

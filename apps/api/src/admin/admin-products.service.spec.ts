@@ -373,6 +373,7 @@ describe('AdminProductsService', () => {
       expect(prisma.product.create).toHaveBeenCalledWith({
         data: {
           categoryId: createDto.categoryId,
+          tenantId: 'default-tenant',
           modelId: createDto.modelId,
           variantId: createDto.variantId,
           grade: createDto.grade,

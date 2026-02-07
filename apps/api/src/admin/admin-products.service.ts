@@ -82,6 +82,7 @@ export class AdminProductsService {
   async create(dto: AdminCreateProductDto) {
     return this.prisma.product.create({
       data: {
+        tenantId: 'default-tenant',
         categoryId: dto.categoryId,
         modelId: dto.modelId,
         variantId: dto.variantId,

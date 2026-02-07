@@ -121,6 +121,7 @@ describe('SellRequestsService', () => {
           estimatedPrice: createSellRequestDto.estimatedPrice,
           tradeMethod: createSellRequestDto.tradeMethod,
           deviceCondition: createSellRequestDto.deviceCondition,
+          tenantId: 'default-tenant',
         },
       });
       expect(result).toEqual(mockSellRequest);

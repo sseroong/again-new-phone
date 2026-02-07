@@ -119,6 +119,7 @@ describe('ReviewsService', () => {
           rating: buyDto.rating,
           images: [],
           quotesReceived: undefined,
+          tenantId: 'default-tenant',
         },
         include: {
           user: { select: { id: true, name: true } },
@@ -189,6 +190,7 @@ describe('ReviewsService', () => {
           rating: sellDto.rating,
           images: [],
           quotesReceived: sellDto.quotesReceived,
+          tenantId: 'default-tenant',
         },
         include: {
           user: { select: { id: true, name: true } },

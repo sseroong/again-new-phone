@@ -126,6 +126,7 @@ describe('OrdersService', () => {
         data: expect.objectContaining({
           userId,
           totalAmount: 2000000,
+          tenantId: 'default-tenant',
           shippingName: '홍길동',
           shippingPhone: '010-1234-5678',
           shippingZipCode: '06100',
@@ -134,8 +135,8 @@ describe('OrdersService', () => {
           shippingMemo: '부재 시 경비실에 맡겨주세요',
           items: {
             create: [
-              { productId: 'product-1', quantity: 1, price: 1200000 },
-              { productId: 'product-2', quantity: 1, price: 800000 },
+              { productId: 'product-1', quantity: 1, price: 1200000, tenantId: 'default-tenant' },
+              { productId: 'product-2', quantity: 1, price: 800000, tenantId: 'default-tenant' },
             ],
           },
         }),
@@ -201,7 +202,7 @@ describe('OrdersService', () => {
             totalAmount: 2400000,
             items: {
               create: [
-                { productId: 'product-1', quantity: 2, price: 1200000 },
+                { productId: 'product-1', quantity: 2, price: 1200000, tenantId: 'default-tenant' },
               ],
             },
           }),

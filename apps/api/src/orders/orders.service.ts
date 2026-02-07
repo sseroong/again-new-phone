@@ -49,6 +49,7 @@ export class OrdersService {
         productId: item.productId,
         quantity: item.quantity,
         price: product.sellingPrice,
+        tenantId: 'default-tenant',
       };
     });
 
@@ -69,6 +70,7 @@ export class OrdersService {
           orderNumber,
           userId,
           totalAmount,
+          tenantId: 'default-tenant',
           shippingName: dto.shippingName,
           shippingPhone: dto.shippingPhone,
           shippingZipCode: dto.shippingZipCode,
@@ -303,6 +305,7 @@ export class OrdersService {
           data: {
             orderId: order.id,
             method: (tossResponse.method === '카드' ? 'CARD' : 'BANK_TRANSFER') as any,
+            tenantId: 'default-tenant',
             amount: order.totalAmount,
             ...paymentData,
           },
