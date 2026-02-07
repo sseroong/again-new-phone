@@ -137,6 +137,18 @@ export class UsersService {
     return { message: '배송지가 삭제되었습니다.' };
   }
 
+  async getUserTenants(userId: string) {
+    return this.prisma.userTenant.findMany({
+      where: { userId, isActive: true },
+      include: {
+        tenant: {
+          select: { id: true, name: true, slug: true },
+        },
+      },
+      orderBy: { joinedAt: 'asc' },
+    });
+  }
+
   async setDefaultAddress(userId: string, addressId: string) {
     const address = await this.prisma.address.findFirst({
       where: { id: addressId, userId },

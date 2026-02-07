@@ -1,6 +1,12 @@
 <script setup lang="ts">
 const route = useRoute();
 const authStore = useAuthStore();
+const tenantStore = useTenantStore();
+
+function onTenantChange(tenantId: string) {
+  tenantStore.setTenantId(tenantId);
+  reloadNuxtApp();
+}
 
 const sidebarItems = [
   { label: '대시보드', to: '/', icon: 'i-heroicons-home' },
@@ -95,6 +101,24 @@ const sidebarCollapsed = ref(false);
         />
 
         <div class="flex-1" />
+
+        <!-- 테넌트 셀렉터 -->
+        <div v-if="tenantStore.tenantOptions.length > 1" class="mr-4">
+          <USelect
+            :model-value="tenantStore.selectedTenantId"
+            :options="tenantStore.tenantOptions"
+            value-attribute="value"
+            option-attribute="label"
+            size="sm"
+            class="w-48"
+            icon="i-heroicons-building-office-2"
+            @update:model-value="onTenantChange"
+          />
+        </div>
+        <UBadge v-else-if="tenantStore.currentTenant" color="gray" variant="subtle" size="xs" class="mr-4">
+          <UIcon name="i-heroicons-building-office-2" class="w-3 h-3 mr-1" />
+          {{ tenantStore.currentTenant.name }}
+        </UBadge>
 
         <div class="flex items-center gap-4">
           <span class="text-sm text-gray-600">

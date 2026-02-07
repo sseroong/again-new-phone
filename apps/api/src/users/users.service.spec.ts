@@ -566,4 +566,85 @@ describe('UsersService', () => {
       expect(updateCalls.length).toBe(1);
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // getUserTenants
+  // ---------------------------------------------------------------------------
+  describe('getUserTenants', () => {
+    const mockUserTenants = [
+      {
+        id: 'ut-uuid-1',
+        userId: mockUser.id,
+        tenantId: 'tenant-uuid-1',
+        role: 'MEMBER',
+        isActive: true,
+        joinedAt: new Date('2024-01-15'),
+        tenant: { id: 'tenant-uuid-1', name: '테넌트A', slug: 'tenant-a' },
+      },
+      {
+        id: 'ut-uuid-2',
+        userId: mockUser.id,
+        tenantId: 'tenant-uuid-2',
+        role: 'ADMIN',
+        isActive: true,
+        joinedAt: new Date('2024-03-20'),
+        tenant: { id: 'tenant-uuid-2', name: '테넌트B', slug: 'tenant-b' },
+      },
+    ];
+
+    it('정상적으로 사용자의 테넌트 목록을 조회한다', async () => {
+      prisma.userTenant.findMany.mockResolvedValue(mockUserTenants);
+
+      const result = await service.getUserTenants(mockUser.id);
+
+      expect(prisma.userTenant.findMany).toHaveBeenCalledWith({
+        where: { userId: mockUser.id, isActive: true },
+        include: {
+          tenant: { select: { id: true, name: true, slug: true } },
+        },
+        orderBy: { joinedAt: 'asc' },
+      });
+      expect(result).toEqual(mockUserTenants);
+      expect(result).toHaveLength(2);
+      expect(result[0].tenant.name).toBe('테넌트A');
+      expect(result[1].tenant.name).toBe('테넌트B');
+    });
+
+    it('테넌트가 없는 사용자의 경우 빈 배열을 반환한다', async () => {
+      prisma.userTenant.findMany.mockResolvedValue([]);
+
+      const result = await service.getUserTenants(mockUser.id);
+
+      expect(prisma.userTenant.findMany).toHaveBeenCalledWith({
+        where: { userId: mockUser.id, isActive: true },
+        include: {
+          tenant: { select: { id: true, name: true, slug: true } },
+        },
+        orderBy: { joinedAt: 'asc' },
+      });
+      expect(result).toEqual([]);
+      expect(result).toHaveLength(0);
+    });
+
+    it('활성 테넌트만 조회한다', async () => {
+      prisma.userTenant.findMany.mockResolvedValue([mockUserTenants[0]]);
+
+      await service.getUserTenants(mockUser.id);
+
+      const callArgs = prisma.userTenant.findMany.mock.calls[0][0];
+      expect(callArgs.where).toEqual({
+        userId: mockUser.id,
+        isActive: true,
+      });
+    });
+
+    it('가입일 순으로 정렬한다', async () => {
+      prisma.userTenant.findMany.mockResolvedValue(mockUserTenants);
+
+      await service.getUserTenants(mockUser.id);
+
+      const callArgs = prisma.userTenant.findMany.mock.calls[0][0];
+      expect(callArgs.orderBy).toEqual({ joinedAt: 'asc' });
+    });
+  });
 });

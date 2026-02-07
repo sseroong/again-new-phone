@@ -33,6 +33,13 @@ export class UsersController {
     return this.usersService.findById(userId);
   }
 
+  @Get('me/tenants')
+  @ApiOperation({ summary: '내 테넌트 목록 조회' })
+  @ApiResponse({ status: 200, description: '조회 성공' })
+  async getMyTenants(@CurrentUser('id') userId: string) {
+    return this.usersService.getUserTenants(userId);
+  }
+
   @Patch('me')
   @ApiOperation({ summary: '내 정보 수정' })
   @ApiResponse({ status: 200, description: '수정 성공' })
