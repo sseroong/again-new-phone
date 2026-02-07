@@ -12,12 +12,18 @@ export function useApi<T>(
     key: typeof url === 'string' ? url : undefined,
 
     onRequest({ options }) {
+      const headers = new Headers(options.headers);
+
       // 인증 토큰 추가
       if (authStore.tokens?.accessToken) {
-        const headers = new Headers(options.headers);
         headers.set('Authorization', `Bearer ${authStore.tokens.accessToken}`);
-        options.headers = headers;
       }
+
+      // 테넌트 ID 헤더 추가
+      const tenantStore = useTenantStore();
+      headers.set('X-Tenant-ID', tenantStore.tenantId);
+
+      options.headers = headers;
     },
 
     onResponseError({ response }) {
