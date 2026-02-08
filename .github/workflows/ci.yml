@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "8.15.0"
+
+jobs:
+  lint-and-test:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: phone_marketplace_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/phone_marketplace_test
+      JWT_SECRET: ci-test-jwt-secret-minimum-32-chars
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_EXPIRY: 7d
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @phone-marketplace/shared build
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Run Prisma migrations
+        run: npx prisma migrate deploy --schema prisma/schema.prisma
+
+      - name: Lint
+        run: pnpm --filter @phone-marketplace/api lint
+
+      - name: Test
+        run: pnpm --filter @phone-marketplace/api test
