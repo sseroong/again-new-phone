@@ -9,6 +9,7 @@ const route = useRoute();
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBaseUrl as string;
 const authStore = useAuthStore();
+const cartStore = useCartStore();
 
 const productId = route.params.id as string;
 
@@ -57,6 +58,14 @@ const handleOrder = () => {
     return navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`);
   }
   navigateTo(`/buy/checkout?productId=${productId}`);
+};
+
+// 장바구니 담기
+const handleAddToCart = () => {
+  if (!authStore.isAuthenticated) {
+    return navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`);
+  }
+  cartStore.addItem(productId);
 };
 
 const gradeInfo = computed(() => {
@@ -207,11 +216,20 @@ const gradeInfo = computed(() => {
             <div class="flex gap-3">
               <UButton
                 size="lg"
+                variant="outline"
+                class="flex-1"
+                :disabled="product.status !== 'AVAILABLE' || cartStore.hasProduct(productId)"
+                @click="handleAddToCart"
+              >
+                {{ cartStore.hasProduct(productId) ? '장바구니에 담김' : '장바구니 담기' }}
+              </UButton>
+              <UButton
+                size="lg"
                 class="flex-1"
                 :disabled="product.status !== 'AVAILABLE'"
                 @click="handleOrder"
               >
-                {{ product.status === 'AVAILABLE' ? '구매하기' : '판매 완료' }}
+                {{ product.status === 'AVAILABLE' ? '바로 구매' : '판매 완료' }}
               </UButton>
             </div>
           </div>
