@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { DEFAULT_TENANT_ID } from '@phone-marketplace/shared';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service";
+import { DEFAULT_TENANT_ID } from "@phone-marketplace/shared";
 
 @Injectable()
 export class TenantService {

@@ -2,10 +2,15 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../prisma/prisma.service';
-import { UpdateUserDto, ChangePasswordDto, CreateAddressDto, UpdateAddressDto } from './dto';
+} from "@nestjs/common";
+import * as bcrypt from "bcrypt";
+import { PrismaService } from "../prisma/prisma.service";
+import {
+  UpdateUserDto,
+  ChangePasswordDto,
+  CreateAddressDto,
+  UpdateAddressDto,
+} from "./dto";
 
 @Injectable()
 export class UsersService {
@@ -26,7 +31,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      throw new NotFoundException("사용자를 찾을 수 없습니다.");
     }
 
     return user;
@@ -54,13 +59,16 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      throw new NotFoundException("사용자를 찾을 수 없습니다.");
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.password,
+    );
 
     if (!isPasswordValid) {
-      throw new BadRequestException('현재 비밀번호가 올바르지 않습니다.');
+      throw new BadRequestException("현재 비밀번호가 올바르지 않습니다.");
     }
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
@@ -70,14 +78,14 @@ export class UsersService {
       data: { password: hashedPassword },
     });
 
-    return { message: '비밀번호가 변경되었습니다.' };
+    return { message: "비밀번호가 변경되었습니다." };
   }
 
   // 배송지 관련
   async getAddresses(userId: string) {
     return this.prisma.address.findMany({
       where: { userId },
-      orderBy: [{ isDefault: 'desc' }, { id: 'desc' }],
+      orderBy: [{ isDefault: "desc" }, { id: "desc" }],
     });
   }
 
@@ -98,13 +106,17 @@ export class UsersService {
     });
   }
 
-  async updateAddress(userId: string, addressId: string, dto: UpdateAddressDto) {
+  async updateAddress(
+    userId: string,
+    addressId: string,
+    dto: UpdateAddressDto,
+  ) {
     const address = await this.prisma.address.findFirst({
       where: { id: addressId, userId },
     });
 
     if (!address) {
-      throw new NotFoundException('배송지를 찾을 수 없습니다.');
+      throw new NotFoundException("배송지를 찾을 수 없습니다.");
     }
 
     // 기본 배송지로 설정하는 경우 기존 기본 배송지 해제
@@ -127,14 +139,14 @@ export class UsersService {
     });
 
     if (!address) {
-      throw new NotFoundException('배송지를 찾을 수 없습니다.');
+      throw new NotFoundException("배송지를 찾을 수 없습니다.");
     }
 
     await this.prisma.address.delete({
       where: { id: addressId },
     });
 
-    return { message: '배송지가 삭제되었습니다.' };
+    return { message: "배송지가 삭제되었습니다." };
   }
 
   async getUserTenants(userId: string) {
@@ -145,7 +157,7 @@ export class UsersService {
           select: { id: true, name: true, slug: true },
         },
       },
-      orderBy: { joinedAt: 'asc' },
+      orderBy: { joinedAt: "asc" },
     });
   }
 
@@ -155,7 +167,7 @@ export class UsersService {
     });
 
     if (!address) {
-      throw new NotFoundException('배송지를 찾을 수 없습니다.');
+      throw new NotFoundException("배송지를 찾을 수 없습니다.");
     }
 
     // 기존 기본 배송지 해제

@@ -1,46 +1,45 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OrderStatus, PaymentStatus, SellRequestStatus } from '@prisma/client';
-import { AdminDashboardService } from './admin-dashboard.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { OrderStatus, PaymentStatus, SellRequestStatus } from "@prisma/client";
+import { AdminDashboardService } from "./admin-dashboard.service";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   createMockPrismaService,
   MockPrismaService,
-} from '../test-utils/prisma-mock';
-import { DashboardQueryDto } from './dto';
+} from "../test-utils/prisma-mock";
+import { DashboardQueryDto } from "./dto";
 
-describe('AdminDashboardService', () => {
+describe("AdminDashboardService", () => {
   let service: AdminDashboardService;
   let prisma: MockPrismaService;
 
-
-  const tenantId = 'default-tenant';
+  const tenantId = "default-tenant";
   const mockRecentOrder = {
-    id: 'order-uuid-1',
-    userId: 'user-uuid-1',
+    id: "order-uuid-1",
+    userId: "user-uuid-1",
     status: OrderStatus.PAID,
     totalAmount: 850000,
-    createdAt: new Date('2024-06-15'),
-    updatedAt: new Date('2024-06-15'),
-    user: { id: 'user-uuid-1', name: '홍길동', email: 'hong@example.com' },
+    createdAt: new Date("2024-06-15"),
+    updatedAt: new Date("2024-06-15"),
+    user: { id: "user-uuid-1", name: "홍길동", email: "hong@example.com" },
     items: [
       {
-        id: 'item-uuid-1',
+        id: "item-uuid-1",
         product: {
-          id: 'product-uuid-1',
-          model: { id: 'model-uuid-1', name: 'iPhone 15 Pro' },
-          variant: { id: 'variant-uuid-1', storage: '256GB' },
+          id: "product-uuid-1",
+          model: { id: "model-uuid-1", name: "iPhone 15 Pro" },
+          variant: { id: "variant-uuid-1", storage: "256GB" },
         },
       },
     ],
   };
 
   const mockRecentSellRequest = {
-    id: 'sell-req-uuid-1',
-    userId: 'user-uuid-2',
+    id: "sell-req-uuid-1",
+    userId: "user-uuid-2",
     status: SellRequestStatus.PENDING,
-    createdAt: new Date('2024-06-14'),
-    updatedAt: new Date('2024-06-14'),
-    user: { id: 'user-uuid-2', name: '김철수', email: 'kim@example.com' },
+    createdAt: new Date("2024-06-14"),
+    updatedAt: new Date("2024-06-14"),
+    user: { id: "user-uuid-2", name: "김철수", email: "kim@example.com" },
   };
 
   /**
@@ -70,9 +69,7 @@ describe('AdminDashboardService', () => {
     prisma.user.count.mockResolvedValue(defaults.userCount);
     prisma.sellRequest.count.mockResolvedValue(defaults.sellRequestCount);
     prisma.order.findMany.mockResolvedValue(defaults.recentOrders);
-    prisma.sellRequest.findMany.mockResolvedValue(
-      defaults.recentSellRequests,
-    );
+    prisma.sellRequest.findMany.mockResolvedValue(defaults.recentSellRequests);
   }
 
   beforeEach(async () => {
@@ -95,15 +92,15 @@ describe('AdminDashboardService', () => {
   // ---------------------------------------------------------------------------
   // 서비스 정의 확인
   // ---------------------------------------------------------------------------
-  it('서비스가 정의되어 있어야 한다', () => {
+  it("서비스가 정의되어 있어야 한다", () => {
     expect(service).toBeDefined();
   });
 
   // ---------------------------------------------------------------------------
   // getStats
   // ---------------------------------------------------------------------------
-  describe('getStats', () => {
-    it('기본 통계를 반환한다', async () => {
+  describe("getStats", () => {
+    it("기본 통계를 반환한다", async () => {
       setupDefaultMocks();
 
       const query: DashboardQueryDto = {};
@@ -140,7 +137,7 @@ describe('AdminDashboardService', () => {
       expect(prisma.order.findMany).toHaveBeenCalledWith({
         where: { tenantId },
         take: 5,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: { select: { id: true, name: true, email: true } },
           items: {
@@ -157,7 +154,7 @@ describe('AdminDashboardService', () => {
       expect(prisma.sellRequest.findMany).toHaveBeenCalledWith({
         where: { tenantId },
         take: 5,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: { select: { id: true, name: true, email: true } },
         },
@@ -176,18 +173,18 @@ describe('AdminDashboardService', () => {
       });
     });
 
-    it('날짜 필터 적용 시 createdAt/paidAt 조건이 포함된다', async () => {
+    it("날짜 필터 적용 시 createdAt/paidAt 조건이 포함된다", async () => {
       setupDefaultMocks();
 
       const query: DashboardQueryDto = {
-        startDate: '2024-06-01',
-        endDate: '2024-06-30',
+        startDate: "2024-06-01",
+        endDate: "2024-06-30",
       };
       await service.getStats(tenantId, query);
 
       const expectedDateFilter = {
-        gte: new Date('2024-06-01'),
-        lte: new Date('2024-06-30T23:59:59.999Z'),
+        gte: new Date("2024-06-01"),
+        lte: new Date("2024-06-30T23:59:59.999Z"),
       };
 
       // order.count에 createdAt 필터가 적용되어야 한다
@@ -210,16 +207,16 @@ describe('AdminDashboardService', () => {
       });
     });
 
-    it('startDate만 지정 시 gte 조건만 적용된다', async () => {
+    it("startDate만 지정 시 gte 조건만 적용된다", async () => {
       setupDefaultMocks();
 
-      const query: DashboardQueryDto = { startDate: '2024-06-01' };
+      const query: DashboardQueryDto = { startDate: "2024-06-01" };
       await service.getStats(tenantId, query);
 
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
           tenantId,
-          createdAt: { gte: new Date('2024-06-01') },
+          createdAt: { gte: new Date("2024-06-01") },
           status: { not: OrderStatus.CANCELLED },
         },
       });
@@ -229,21 +226,21 @@ describe('AdminDashboardService', () => {
         where: {
           tenantId,
           status: PaymentStatus.COMPLETED,
-          paidAt: { gte: new Date('2024-06-01') },
+          paidAt: { gte: new Date("2024-06-01") },
         },
       });
     });
 
-    it('endDate만 지정 시 lte 조건만 적용된다', async () => {
+    it("endDate만 지정 시 lte 조건만 적용된다", async () => {
       setupDefaultMocks();
 
-      const query: DashboardQueryDto = { endDate: '2024-06-30' };
+      const query: DashboardQueryDto = { endDate: "2024-06-30" };
       await service.getStats(tenantId, query);
 
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
           tenantId,
-          createdAt: { lte: new Date('2024-06-30T23:59:59.999Z') },
+          createdAt: { lte: new Date("2024-06-30T23:59:59.999Z") },
           status: { not: OrderStatus.CANCELLED },
         },
       });
@@ -253,12 +250,12 @@ describe('AdminDashboardService', () => {
         where: {
           tenantId,
           status: PaymentStatus.COMPLETED,
-          paidAt: { lte: new Date('2024-06-30T23:59:59.999Z') },
+          paidAt: { lte: new Date("2024-06-30T23:59:59.999Z") },
         },
       });
     });
 
-    it('매출이 없을 때 totalRevenue가 0을 반환한다', async () => {
+    it("매출이 없을 때 totalRevenue가 0을 반환한다", async () => {
       setupDefaultMocks({
         orderCount: 0,
         paymentAggregate: { _sum: { amount: null } },
@@ -277,20 +274,20 @@ describe('AdminDashboardService', () => {
       expect(result.stats.pendingSellRequests).toBe(0);
     });
 
-    it('최근 주문과 판매접수 목록을 포함한다', async () => {
+    it("최근 주문과 판매접수 목록을 포함한다", async () => {
       const multipleOrders = [
         mockRecentOrder,
         {
           ...mockRecentOrder,
-          id: 'order-uuid-2',
+          id: "order-uuid-2",
           totalAmount: 500000,
-          createdAt: new Date('2024-06-14'),
+          createdAt: new Date("2024-06-14"),
         },
         {
           ...mockRecentOrder,
-          id: 'order-uuid-3',
+          id: "order-uuid-3",
           totalAmount: 1200000,
-          createdAt: new Date('2024-06-13'),
+          createdAt: new Date("2024-06-13"),
         },
       ];
 
@@ -298,12 +295,12 @@ describe('AdminDashboardService', () => {
         mockRecentSellRequest,
         {
           ...mockRecentSellRequest,
-          id: 'sell-req-uuid-2',
-          createdAt: new Date('2024-06-13'),
+          id: "sell-req-uuid-2",
+          createdAt: new Date("2024-06-13"),
           user: {
-            id: 'user-uuid-3',
-            name: '이영희',
-            email: 'lee@example.com',
+            id: "user-uuid-3",
+            name: "이영희",
+            email: "lee@example.com",
           },
         },
       ];
@@ -322,8 +319,8 @@ describe('AdminDashboardService', () => {
       expect(result.recentSellRequests).toEqual(multipleSellRequests);
 
       // 최근 주문에 user, items 관계가 포함되어야 한다
-      expect(result.recentOrders[0]).toHaveProperty('user');
-      expect(result.recentOrders[0]).toHaveProperty('items');
+      expect(result.recentOrders[0]).toHaveProperty("user");
+      expect(result.recentOrders[0]).toHaveProperty("items");
       expect(result.recentOrders[0].user).toEqual(
         expect.objectContaining({
           id: expect.any(String),
@@ -333,7 +330,7 @@ describe('AdminDashboardService', () => {
       );
 
       // 최근 판매접수에 user 관계가 포함되어야 한다
-      expect(result.recentSellRequests[0]).toHaveProperty('user');
+      expect(result.recentSellRequests[0]).toHaveProperty("user");
       expect(result.recentSellRequests[0].user).toEqual(
         expect.objectContaining({
           id: expect.any(String),
@@ -343,7 +340,7 @@ describe('AdminDashboardService', () => {
       );
     });
 
-    it('6개의 Prisma 호출이 모두 실행된다', async () => {
+    it("6개의 Prisma 호출이 모두 실행된다", async () => {
       setupDefaultMocks();
 
       const query: DashboardQueryDto = {};

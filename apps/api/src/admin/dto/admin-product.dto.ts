@@ -7,15 +7,15 @@ import {
   IsString,
   IsArray,
   IsNumber,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
   DeviceCategory,
   Brand,
   ProductGrade,
   ProductStatus,
-} from '@prisma/client';
+} from "@prisma/client";
 
 export class AdminProductQueryDto {
   @ApiPropertyOptional({ enum: DeviceCategory })
@@ -38,7 +38,7 @@ export class AdminProductQueryDto {
   @IsEnum(ProductStatus)
   status?: ProductStatus;
 
-  @ApiPropertyOptional({ description: '검색어' })
+  @ApiPropertyOptional({ description: "검색어" })
   @IsOptional()
   @IsString()
   search?: string;

@@ -1,7 +1,7 @@
-import { Module, Global } from '@nestjs/common';
-import { TenantService } from './tenant.service';
-import { TenantGuard } from './tenant.guard';
-import { TenantController } from './tenant.controller';
+import { Module, Global } from "@nestjs/common";
+import { TenantService } from "./tenant.service";
+import { TenantGuard } from "./tenant.guard";
+import { TenantController } from "./tenant.controller";
 
 @Global()
 @Module({

@@ -2,18 +2,22 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { Prisma, OrderStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+} from "@nestjs/common";
+import { Prisma, OrderStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   AdminOrderQueryDto,
   AdminUpdateOrderStatusDto,
   AdminUpdateTrackingDto,
-} from './dto';
+} from "./dto";
 
 const VALID_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING_PAYMENT]: [OrderStatus.PAID, OrderStatus.CANCELLED],
-  [OrderStatus.PAID]: [OrderStatus.PREPARING, OrderStatus.CANCELLED, OrderStatus.REFUNDED],
+  [OrderStatus.PAID]: [
+    OrderStatus.PREPARING,
+    OrderStatus.CANCELLED,
+    OrderStatus.REFUNDED,
+  ],
   [OrderStatus.PREPARING]: [OrderStatus.SHIPPING],
   [OrderStatus.SHIPPING]: [OrderStatus.DELIVERED],
   [OrderStatus.DELIVERED]: [OrderStatus.COMPLETED],
@@ -37,8 +41,8 @@ export class AdminOrdersService {
 
     if (search) {
       where.OR = [
-        { orderNumber: { contains: search, mode: 'insensitive' } },
-        { shippingName: { contains: search, mode: 'insensitive' } },
+        { orderNumber: { contains: search, mode: "insensitive" } },
+        { shippingName: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -56,7 +60,7 @@ export class AdminOrdersService {
           },
           payment: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -91,7 +95,7 @@ export class AdminOrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+      throw new NotFoundException("주문을 찾을 수 없습니다.");
     }
 
     return order;
@@ -103,7 +107,7 @@ export class AdminOrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+      throw new NotFoundException("주문을 찾을 수 없습니다.");
     }
 
     const allowedTransitions = VALID_STATUS_TRANSITIONS[order.status];
@@ -144,14 +148,14 @@ export class AdminOrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+      throw new NotFoundException("주문을 찾을 수 없습니다.");
     }
 
     if (
       order.status !== OrderStatus.PREPARING &&
       order.status !== OrderStatus.SHIPPING
     ) {
-      throw new BadRequestException('송장번호를 등록할 수 없는 상태입니다.');
+      throw new BadRequestException("송장번호를 등록할 수 없는 상태입니다.");
     }
 
     const updateData: Prisma.OrderUpdateInput = {

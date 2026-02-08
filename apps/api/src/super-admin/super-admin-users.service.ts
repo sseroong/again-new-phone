@@ -2,10 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
-} from '@nestjs/common';
-import { Prisma, UserRole } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { SuperAdminUserQueryDto, AssignUserTenantDto } from './dto';
+} from "@nestjs/common";
+import { Prisma, UserRole } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { SuperAdminUserQueryDto, AssignUserTenantDto } from "./dto";
 
 @Injectable()
 export class SuperAdminUsersService {
@@ -20,8 +20,8 @@ export class SuperAdminUsersService {
 
     if (query.search) {
       where.OR = [
-        { name: { contains: query.search, mode: 'insensitive' } },
-        { email: { contains: query.search, mode: 'insensitive' } },
+        { name: { contains: query.search, mode: "insensitive" } },
+        { email: { contains: query.search, mode: "insensitive" } },
       ];
     }
 
@@ -52,7 +52,7 @@ export class SuperAdminUsersService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -73,14 +73,14 @@ export class SuperAdminUsersService {
   async assignTenant(userId: string, dto: AssignUserTenantDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      throw new NotFoundException("사용자를 찾을 수 없습니다.");
     }
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: dto.tenantId },
     });
     if (!tenant) {
-      throw new NotFoundException('테넌트를 찾을 수 없습니다.');
+      throw new NotFoundException("테넌트를 찾을 수 없습니다.");
     }
 
     try {
@@ -98,11 +98,9 @@ export class SuperAdminUsersService {
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
+        error.code === "P2002"
       ) {
-        throw new ConflictException(
-          '이미 해당 테넌트에 할당된 사용자입니다.',
-        );
+        throw new ConflictException("이미 해당 테넌트에 할당된 사용자입니다.");
       }
       throw error;
     }
@@ -114,9 +112,7 @@ export class SuperAdminUsersService {
     });
 
     if (!userTenant) {
-      throw new NotFoundException(
-        '해당 테넌트에 소속되지 않은 사용자입니다.',
-      );
+      throw new NotFoundException("해당 테넌트에 소속되지 않은 사용자입니다.");
     }
 
     return this.prisma.userTenant.delete({

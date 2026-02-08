@@ -2,14 +2,14 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { Prisma, SellRequestStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+} from "@nestjs/common";
+import { Prisma, SellRequestStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   AdminSellRequestQueryDto,
   AdminUpdateSellRequestDto,
   AdminCreateQuoteDto,
-} from './dto';
+} from "./dto";
 
 @Injectable()
 export class AdminSellRequestsService {
@@ -25,9 +25,9 @@ export class AdminSellRequestsService {
 
     if (search) {
       where.OR = [
-        { modelName: { contains: search, mode: 'insensitive' } },
-        { user: { name: { contains: search, mode: 'insensitive' } } },
-        { user: { email: { contains: search, mode: 'insensitive' } } },
+        { modelName: { contains: search, mode: "insensitive" } },
+        { user: { name: { contains: search, mode: "insensitive" } } },
+        { user: { email: { contains: search, mode: "insensitive" } } },
       ];
     }
 
@@ -36,9 +36,9 @@ export class AdminSellRequestsService {
         where,
         include: {
           user: { select: { id: true, name: true, email: true } },
-          quotes: { orderBy: { createdAt: 'desc' } },
+          quotes: { orderBy: { createdAt: "desc" } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -61,12 +61,12 @@ export class AdminSellRequestsService {
       where: { id },
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
-        quotes: { orderBy: { createdAt: 'desc' } },
+        quotes: { orderBy: { createdAt: "desc" } },
       },
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     return sellRequest;
@@ -78,7 +78,7 @@ export class AdminSellRequestsService {
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     const updateData: Prisma.SellRequestUpdateInput = {};
@@ -108,14 +108,16 @@ export class AdminSellRequestsService {
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     if (
       sellRequest.status !== SellRequestStatus.PENDING &&
       sellRequest.status !== SellRequestStatus.QUOTED
     ) {
-      throw new BadRequestException('현재 상태에서는 견적을 생성할 수 없습니다.');
+      throw new BadRequestException(
+        "현재 상태에서는 견적을 생성할 수 없습니다.",
+      );
     }
 
     return this.prisma.executeInTransaction(async (tx) => {

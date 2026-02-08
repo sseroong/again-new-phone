@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, ProductStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { ProductQueryDto } from './dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma, ProductStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { ProductQueryDto } from "./dto";
 
 @Injectable()
 export class ProductsService {
@@ -18,8 +18,8 @@ export class ProductsService {
       minPrice,
       maxPrice,
       search,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
+      sortBy = "createdAt",
+      sortOrder = "desc",
       page = 1,
       limit = 20,
     } = query;
@@ -61,17 +61,17 @@ export class ProductsService {
 
     if (search) {
       where.OR = [
-        { model: { name: { contains: search, mode: 'insensitive' } } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { model: { name: { contains: search, mode: "insensitive" } } },
+        { description: { contains: search, mode: "insensitive" } },
       ];
     }
 
     const orderBy: Prisma.ProductOrderByWithRelationInput = {};
-    if (sortBy === 'price') {
+    if (sortBy === "price") {
       orderBy.sellingPrice = sortOrder;
-    } else if (sortBy === 'rating') {
+    } else if (sortBy === "rating") {
       orderBy.rating = sortOrder;
-    } else if (sortBy === 'viewCount') {
+    } else if (sortBy === "viewCount") {
       orderBy.viewCount = sortOrder;
     } else {
       orderBy.createdAt = sortOrder;
@@ -120,7 +120,7 @@ export class ProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
+      throw new NotFoundException("상품을 찾을 수 없습니다.");
     }
 
     // 조회수 증가
@@ -135,7 +135,7 @@ export class ProductsService {
   async getCategories() {
     return this.prisma.category.findMany({
       where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sortOrder: "asc" },
     });
   }
 
@@ -158,7 +158,7 @@ export class ProductsService {
         category: true,
         variants: true,
       },
-      orderBy: { releaseDate: 'desc' },
+      orderBy: { releaseDate: "desc" },
     });
   }
 
@@ -171,7 +171,7 @@ export class ProductsService {
     });
 
     if (!model) {
-      throw new NotFoundException('모델을 찾을 수 없습니다.');
+      throw new NotFoundException("모델을 찾을 수 없습니다.");
     }
 
     return model.variants;
@@ -184,7 +184,7 @@ export class ProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
+      throw new NotFoundException("상품을 찾을 수 없습니다.");
     }
 
     // 같은 모델, 다른 상품
@@ -234,7 +234,7 @@ export class ProductsService {
         model: true,
         variant: true,
       },
-      orderBy: { viewCount: 'desc' },
+      orderBy: { viewCount: "desc" },
       take: limit,
     });
   }
@@ -247,7 +247,7 @@ export class ProductsService {
         model: true,
         variant: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limit,
     });
   }

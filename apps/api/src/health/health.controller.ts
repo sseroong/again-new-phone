@@ -1,16 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { Public } from '../auth/decorators/public.decorator';
+import { Controller, Get } from "@nestjs/common";
+import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { Public } from "../auth/decorators/public.decorator";
 
-@ApiTags('health')
-@Controller('health')
+@ApiTags("health")
+@Controller("health")
 export class HealthController {
   @Get()
   @Public()
-  @ApiOperation({ summary: '헬스체크' })
+  @ApiOperation({ summary: "헬스체크" })
   check() {
     return {
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
     };
   }

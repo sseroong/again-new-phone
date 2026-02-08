@@ -1,7 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { HealthController } from './health.controller';
+import { Test, TestingModule } from "@nestjs/testing";
+import { HealthController } from "./health.controller";
 
-describe('HealthController', () => {
+describe("HealthController", () => {
   let controller: HealthController;
 
   beforeEach(async () => {
@@ -12,14 +12,14 @@ describe('HealthController', () => {
     controller = module.get<HealthController>(HealthController);
   });
 
-  describe('check', () => {
-    it('should return ok status', () => {
+  describe("check", () => {
+    it("should return ok status", () => {
       const result = controller.check();
-      expect(result).toHaveProperty('status', 'ok');
-      expect(result).toHaveProperty('timestamp');
+      expect(result).toHaveProperty("status", "ok");
+      expect(result).toHaveProperty("timestamp");
     });
 
-    it('should return valid ISO timestamp', () => {
+    it("should return valid ISO timestamp", () => {
       const result = controller.check();
       const date = new Date(result.timestamp);
       expect(date.toISOString()).toBe(result.timestamp);

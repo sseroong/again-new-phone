@@ -1,21 +1,26 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   AdminProductQueryDto,
   AdminCreateProductDto,
   AdminUpdateProductDto,
-} from './dto';
+} from "./dto";
 
 @Injectable()
 export class AdminProductsService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(tenantId: string, query: AdminProductQueryDto) {
-    const { category, brand, grade, status, search, page = 1, limit = 20 } = query;
+    const {
+      category,
+      brand,
+      grade,
+      status,
+      search,
+      page = 1,
+      limit = 20,
+    } = query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProductWhereInput = { tenantId };
@@ -27,8 +32,8 @@ export class AdminProductsService {
 
     if (search) {
       where.OR = [
-        { model: { name: { contains: search, mode: 'insensitive' } } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { model: { name: { contains: search, mode: "insensitive" } } },
+        { description: { contains: search, mode: "insensitive" } },
         { imei: { contains: search } },
       ];
     }
@@ -41,7 +46,7 @@ export class AdminProductsService {
           model: true,
           variant: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -67,13 +72,15 @@ export class AdminProductsService {
         model: true,
         variant: true,
         orderItems: {
-          include: { order: { select: { id: true, orderNumber: true, status: true } } },
+          include: {
+            order: { select: { id: true, orderNumber: true, status: true } },
+          },
         },
       },
     });
 
     if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
+      throw new NotFoundException("상품을 찾을 수 없습니다.");
     }
 
     return product;
@@ -109,7 +116,7 @@ export class AdminProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
+      throw new NotFoundException("상품을 찾을 수 없습니다.");
     }
 
     return this.prisma.product.update({
@@ -129,14 +136,14 @@ export class AdminProductsService {
     });
 
     if (!product) {
-      throw new NotFoundException('상품을 찾을 수 없습니다.');
+      throw new NotFoundException("상품을 찾을 수 없습니다.");
     }
 
     await this.prisma.product.update({
       where: { id },
-      data: { status: 'UNAVAILABLE' },
+      data: { status: "UNAVAILABLE" },
     });
 
-    return { message: '상품이 비활성화되었습니다.' };
+    return { message: "상품이 비활성화되었습니다." };
   }
 }

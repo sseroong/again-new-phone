@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, ProductGrade, PriceTrend } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { PriceQueryDto } from './dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma, ProductGrade, PriceTrend } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { PriceQueryDto } from "./dto";
 
 @Injectable()
 export class PricesService {
@@ -42,9 +42,9 @@ export class PricesService {
         },
       },
       orderBy: [
-        { model: { name: 'asc' } },
-        { storage: 'asc' },
-        { grade: 'asc' },
+        { model: { name: "asc" } },
+        { storage: "asc" },
+        { grade: "asc" },
       ],
     });
   }
@@ -59,12 +59,12 @@ export class PricesService {
     });
 
     if (!model) {
-      throw new NotFoundException('모델을 찾을 수 없습니다.');
+      throw new NotFoundException("모델을 찾을 수 없습니다.");
     }
 
     const priceGuides = await this.prisma.priceGuide.findMany({
       where: { modelId },
-      orderBy: [{ storage: 'asc' }, { grade: 'asc' }],
+      orderBy: [{ storage: "asc" }, { grade: "asc" }],
     });
 
     // 저장공간별 그룹핑
@@ -80,7 +80,12 @@ export class PricesService {
     };
   }
 
-  async getPriceHistory(modelId: string, storage: string, grade: ProductGrade, days = 30) {
+  async getPriceHistory(
+    modelId: string,
+    storage: string,
+    grade: ProductGrade,
+    days = 30,
+  ) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -91,7 +96,7 @@ export class PricesService {
         grade,
         recordedAt: { gte: startDate },
       },
-      orderBy: { recordedAt: 'asc' },
+      orderBy: { recordedAt: "asc" },
     });
 
     return history;
@@ -113,7 +118,7 @@ export class PricesService {
           take: 1,
         },
       },
-      orderBy: { releaseDate: 'desc' },
+      orderBy: { releaseDate: "desc" },
       take: limit,
     });
 
@@ -142,13 +147,13 @@ export class PricesService {
           where: {
             grade: { in: [ProductGrade.S, ProductGrade.A] },
           },
-          orderBy: { storage: 'asc' },
+          orderBy: { storage: "asc" },
         },
       },
       orderBy: [
-        { category: { sortOrder: 'asc' } },
-        { brand: 'asc' },
-        { releaseDate: 'desc' },
+        { category: { sortOrder: "asc" } },
+        { brand: "asc" },
+        { releaseDate: "desc" },
       ],
     });
 
@@ -176,15 +181,15 @@ export class PricesService {
       where: {
         isActive: true,
         OR: [
-          { name: { contains: keyword, mode: 'insensitive' } },
-          { series: { contains: keyword, mode: 'insensitive' } },
+          { name: { contains: keyword, mode: "insensitive" } },
+          { series: { contains: keyword, mode: "insensitive" } },
         ],
         priceGuides: { some: {} },
       },
       include: {
         category: true,
         priceGuides: {
-          orderBy: [{ storage: 'asc' }, { grade: 'asc' }],
+          orderBy: [{ storage: "asc" }, { grade: "asc" }],
         },
       },
       take: 20,
@@ -194,10 +199,14 @@ export class PricesService {
   }
 
   // 가격 트렌드 계산 (관리자/배치용)
-  async calculateTrend(modelId: string, storage: string, grade: ProductGrade): Promise<PriceTrend> {
+  async calculateTrend(
+    modelId: string,
+    storage: string,
+    grade: ProductGrade,
+  ): Promise<PriceTrend> {
     const history = await this.prisma.priceHistory.findMany({
       where: { modelId, storage, grade },
-      orderBy: { recordedAt: 'desc' },
+      orderBy: { recordedAt: "desc" },
       take: 7, // 최근 7일
     });
 

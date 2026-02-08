@@ -7,10 +7,10 @@ import {
   IsDateString,
   Min,
   Max,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { ContentType, ContentStatus, BannerPosition } from '@prisma/client';
+} from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { ContentType, ContentStatus, BannerPosition } from "@prisma/client";
 
 // ---------------------------------------------------------------------------
 // Content DTOs
@@ -54,104 +54,104 @@ export class AdminCmsContentQueryDto {
 }
 
 export class AdminCreateContentDto {
-  @ApiProperty({ enum: ContentType, description: '콘텐츠 유형' })
+  @ApiProperty({ enum: ContentType, description: "콘텐츠 유형" })
   @IsEnum(ContentType)
   type: ContentType;
 
-  @ApiProperty({ description: '제목' })
+  @ApiProperty({ description: "제목" })
   @IsString()
   title: string;
 
-  @ApiPropertyOptional({ description: '본문 (NOTICE, EVENT, GUIDE)' })
+  @ApiPropertyOptional({ description: "본문 (NOTICE, EVENT, GUIDE)" })
   @IsOptional()
   @IsString()
   content?: string;
 
-  @ApiPropertyOptional({ description: 'FAQ 답변' })
+  @ApiPropertyOptional({ description: "FAQ 답변" })
   @IsOptional()
   @IsString()
   answer?: string;
 
-  @ApiPropertyOptional({ description: 'FAQ 카테고리' })
+  @ApiPropertyOptional({ description: "FAQ 카테고리" })
   @IsOptional()
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional({ description: '이벤트 썸네일 URL' })
+  @ApiPropertyOptional({ description: "이벤트 썸네일 URL" })
   @IsOptional()
   @IsString()
   thumbnail?: string;
 
-  @ApiPropertyOptional({ description: '시작일' })
+  @ApiPropertyOptional({ description: "시작일" })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: '종료일' })
+  @ApiPropertyOptional({ description: "종료일" })
   @IsOptional()
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: '정렬 순서', default: 0 })
+  @ApiPropertyOptional({ description: "정렬 순서", default: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   sortOrder?: number;
 
-  @ApiPropertyOptional({ description: '고정 여부', default: false })
+  @ApiPropertyOptional({ description: "고정 여부", default: false })
   @IsOptional()
   @IsBoolean()
   isPinned?: boolean;
 
-  @ApiPropertyOptional({ enum: ContentStatus, default: 'DRAFT' })
+  @ApiPropertyOptional({ enum: ContentStatus, default: "DRAFT" })
   @IsOptional()
   @IsEnum(ContentStatus)
   status?: ContentStatus;
 }
 
 export class AdminUpdateContentDto {
-  @ApiPropertyOptional({ description: '제목' })
+  @ApiPropertyOptional({ description: "제목" })
   @IsOptional()
   @IsString()
   title?: string;
 
-  @ApiPropertyOptional({ description: '본문' })
+  @ApiPropertyOptional({ description: "본문" })
   @IsOptional()
   @IsString()
   content?: string;
 
-  @ApiPropertyOptional({ description: 'FAQ 답변' })
+  @ApiPropertyOptional({ description: "FAQ 답변" })
   @IsOptional()
   @IsString()
   answer?: string;
 
-  @ApiPropertyOptional({ description: 'FAQ 카테고리' })
+  @ApiPropertyOptional({ description: "FAQ 카테고리" })
   @IsOptional()
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional({ description: '이벤트 썸네일 URL' })
+  @ApiPropertyOptional({ description: "이벤트 썸네일 URL" })
   @IsOptional()
   @IsString()
   thumbnail?: string;
 
-  @ApiPropertyOptional({ description: '시작일' })
+  @ApiPropertyOptional({ description: "시작일" })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: '종료일' })
+  @ApiPropertyOptional({ description: "종료일" })
   @IsOptional()
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ description: '정렬 순서' })
+  @ApiPropertyOptional({ description: "정렬 순서" })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   sortOrder?: number;
 
-  @ApiPropertyOptional({ description: '고정 여부' })
+  @ApiPropertyOptional({ description: "고정 여부" })
   @IsOptional()
   @IsBoolean()
   isPinned?: boolean;
@@ -195,20 +195,20 @@ export class AdminCmsBannerQueryDto {
 }
 
 export class AdminCreateBannerDto {
-  @ApiProperty({ description: '배너 제목' })
+  @ApiProperty({ description: "배너 제목" })
   @IsString()
   title: string;
 
-  @ApiProperty({ description: '배너 이미지 URL' })
+  @ApiProperty({ description: "배너 이미지 URL" })
   @IsString()
   imageUrl: string;
 
-  @ApiPropertyOptional({ description: '링크 URL' })
+  @ApiPropertyOptional({ description: "링크 URL" })
   @IsOptional()
   @IsString()
   linkUrl?: string;
 
-  @ApiPropertyOptional({ enum: BannerPosition, default: 'MAIN_TOP' })
+  @ApiPropertyOptional({ enum: BannerPosition, default: "MAIN_TOP" })
   @IsOptional()
   @IsEnum(BannerPosition)
   position?: BannerPosition;
@@ -224,12 +224,12 @@ export class AdminCreateBannerDto {
   @IsInt()
   sortOrder?: number;
 
-  @ApiPropertyOptional({ description: '시작일' })
+  @ApiPropertyOptional({ description: "시작일" })
   @IsOptional()
   @IsDateString()
   startDate?: string;
 
-  @ApiPropertyOptional({ description: '종료일' })
+  @ApiPropertyOptional({ description: "종료일" })
   @IsOptional()
   @IsDateString()
   endDate?: string;
