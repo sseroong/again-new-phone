@@ -260,3 +260,46 @@ export interface PriceQuote {
   }[];
   updatedAt: Date;
 }
+
+// =============================================
+// CMS 콘텐츠 관련 타입
+// =============================================
+
+export type ContentType = 'NOTICE' | 'EVENT' | 'FAQ' | 'GUIDE';
+export type ContentStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type BannerPosition = 'MAIN_TOP' | 'MAIN_MIDDLE' | 'MAIN_BOTTOM' | 'POPUP';
+
+export interface Content {
+  id: string;
+  tenantId: string;
+  type: ContentType;
+  status: ContentStatus;
+  title: string;
+  content?: string;
+  answer?: string;
+  category?: string;
+  thumbnail?: string;
+  startDate?: Date;
+  endDate?: Date;
+  authorId: string;
+  sortOrder: number;
+  isPinned: boolean;
+  viewCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Banner {
+  id: string;
+  tenantId: string;
+  title: string;
+  imageUrl: string;
+  linkUrl?: string;
+  position: BannerPosition;
+  isActive: boolean;
+  sortOrder: number;
+  startDate?: Date;
+  endDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}

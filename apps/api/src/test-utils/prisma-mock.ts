@@ -52,6 +52,8 @@ export type MockPrismaService = {
   address: MockPrismaModel;
   tenant: MockPrismaModel;
   userTenant: MockPrismaModel;
+  content: MockPrismaModel;
+  banner: MockPrismaModel;
 };
 
 export function createMockPrismaService(): MockPrismaService {
@@ -73,6 +75,8 @@ export function createMockPrismaService(): MockPrismaService {
     address: createMockModel(),
     tenant: createMockModel(),
     userTenant: createMockModel(),
+    content: createMockModel(),
+    banner: createMockModel(),
     executeInTransaction: jest.fn((fn) => fn(mock)),
     $transaction: jest.fn(),
   };
