@@ -32,6 +32,8 @@ model Tenant {
   sellRequests SellRequest[]
   sellQuotes   SellQuote[]
   reviews      Review[]
+  contents     Content[]
+  banners      Banner[]
 
   @@map("tenants")
 }
@@ -81,6 +83,7 @@ model User {
   reviews       Review[]
   refreshTokens RefreshToken[]
   tenants       UserTenant[]
+  contents      Content[]
 
   @@index([email])
   @@index([role])
@@ -488,4 +491,80 @@ model Review {
   @@index([userId])
   @@index([type])
   @@index([createdAt])
+}
+
+// =============================================
+// CMS 콘텐츠 관련
+// =============================================
+
+enum ContentType {
+  NOTICE
+  EVENT
+  FAQ
+  GUIDE
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum BannerPosition {
+  MAIN_TOP
+  MAIN_MIDDLE
+  MAIN_BOTTOM
+  POPUP
+}
+
+model Content {
+  id        String        @id @default(cuid())
+  tenantId  String        @map("tenant_id")
+  type      ContentType
+  status    ContentStatus @default(DRAFT)
+  title     String
+  content   String?       @db.Text
+  answer    String?       @db.Text
+  category  String?
+  thumbnail String?
+  startDate DateTime?     @map("start_date")
+  endDate   DateTime?     @map("end_date")
+  authorId  String        @map("author_id")
+  sortOrder Int           @default(0) @map("sort_order")
+  isPinned  Boolean       @default(false) @map("is_pinned")
+  viewCount Int           @default(0) @map("view_count")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  author User   @relation(fields: [authorId], references: [id])
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([type, status])
+  @@index([createdAt])
+  @@map("contents")
+}
+
+model Banner {
+  id        String         @id @default(cuid())
+  tenantId  String         @map("tenant_id")
+  title     String
+  imageUrl  String         @map("image_url")
+  linkUrl   String?        @map("link_url")
+  position  BannerPosition @default(MAIN_TOP)
+  isActive  Boolean        @default(true) @map("is_active")
+  sortOrder Int            @default(0) @map("sort_order")
+  startDate DateTime?      @map("start_date")
+  endDate   DateTime?      @map("end_date")
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([position])
+  @@index([isActive])
+  @@map("banners")
 }

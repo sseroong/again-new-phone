@@ -9,6 +9,8 @@ import { AdminSellRequestsController } from './admin-sell-requests.controller';
 import { AdminSellRequestsService } from './admin-sell-requests.service';
 import { AdminUsersController } from './admin-users.controller';
 import { AdminUsersService } from './admin-users.service';
+import { AdminCmsController } from './admin-cms.controller';
+import { AdminCmsService } from './admin-cms.service';
 
 @Module({
   controllers: [
@@ -17,6 +19,7 @@ import { AdminUsersService } from './admin-users.service';
     AdminOrdersController,
     AdminSellRequestsController,
     AdminUsersController,
+    AdminCmsController,
   ],
   providers: [
     AdminDashboardService,
@@ -24,6 +27,7 @@ import { AdminUsersService } from './admin-users.service';
     AdminOrdersService,
     AdminSellRequestsService,
     AdminUsersService,
+    AdminCmsService,
   ],
 })
 export class AdminModule {}

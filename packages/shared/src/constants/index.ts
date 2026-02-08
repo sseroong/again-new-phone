@@ -200,6 +200,42 @@ export const DEFAULT_TENANT_ID = 'default-tenant';
 // API
 // =============================================
 
+// =============================================
+// CMS 콘텐츠
+// =============================================
+
+export const CONTENT_TYPE_LABELS = {
+  NOTICE: '공지사항',
+  EVENT: '이벤트',
+  FAQ: '자주 묻는 질문',
+  GUIDE: '이용가이드',
+} as const;
+
+export const CONTENT_STATUS_LABELS = {
+  DRAFT: '임시저장',
+  PUBLISHED: '게시중',
+  ARCHIVED: '보관됨',
+} as const;
+
+export const BANNER_POSITION_LABELS = {
+  MAIN_TOP: '메인 상단',
+  MAIN_MIDDLE: '메인 중간',
+  MAIN_BOTTOM: '메인 하단',
+  POPUP: '팝업',
+} as const;
+
+export const FAQ_CATEGORIES = {
+  buy: { label: '구매' },
+  sell: { label: '판매' },
+  payment: { label: '결제' },
+  shipping: { label: '배송' },
+  refund: { label: '반품/환불' },
+} as const;
+
+// =============================================
+// API
+// =============================================
+
 export const API_ENDPOINTS = {
   // Auth
   AUTH_LOGIN: '/auth/login',

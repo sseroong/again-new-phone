@@ -14,6 +14,7 @@ const sidebarItems = [
   { label: '주문 관리', to: '/orders', icon: 'i-heroicons-shopping-bag' },
   { label: '판매접수 관리', to: '/sell-requests', icon: 'i-heroicons-arrow-down-tray' },
   { label: '회원 관리', to: '/users', icon: 'i-heroicons-users' },
+  { label: 'CMS 관리', to: '/cms', icon: 'i-heroicons-document-text' },
 ];
 
 const superAdminItems = [

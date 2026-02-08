@@ -11,6 +11,7 @@ import { PricesModule } from './prices/prices.module';
 import { AdminModule } from './admin/admin.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { UploadModule } from './upload/upload.module';
+import { CmsModule } from './cms/cms.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './tenant/tenant.module';
 import { TenantMiddleware } from './tenant/tenant.middleware';
@@ -41,6 +42,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     AdminModule,
     SuperAdminModule,
     UploadModule,
+    CmsModule,
   ],
   providers: [
     // 전역 JWT 인증 가드
