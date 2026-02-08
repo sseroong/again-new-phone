@@ -1,7 +1,7 @@
-import { IsOptional, IsEnum, IsInt, Min, Max, IsString } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { OrderStatus } from '@prisma/client';
+import { IsOptional, IsEnum, IsInt, Min, Max, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { OrderStatus } from "@prisma/client";
 
 export class AdminOrderQueryDto {
   @ApiPropertyOptional({ enum: OrderStatus })
@@ -9,12 +9,12 @@ export class AdminOrderQueryDto {
   @IsEnum(OrderStatus)
   status?: OrderStatus;
 
-  @ApiPropertyOptional({ description: '사용자 ID' })
+  @ApiPropertyOptional({ description: "사용자 ID" })
   @IsOptional()
   @IsString()
   userId?: string;
 
-  @ApiPropertyOptional({ description: '검색어 (주문번호, 수령인)' })
+  @ApiPropertyOptional({ description: "검색어 (주문번호, 수령인)" })
   @IsOptional()
   @IsString()
   search?: string;
@@ -42,11 +42,11 @@ export class AdminUpdateOrderStatusDto {
 }
 
 export class AdminUpdateTrackingDto {
-  @ApiProperty({ description: '송장번호' })
+  @ApiProperty({ description: "송장번호" })
   @IsString()
   trackingNumber: string;
 
-  @ApiPropertyOptional({ description: '택배사' })
+  @ApiPropertyOptional({ description: "택배사" })
   @IsOptional()
   @IsString()
   trackingCompany?: string;

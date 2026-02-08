@@ -2,10 +2,15 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { Prisma, ReviewType, OrderStatus, SellRequestStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateReviewDto, ReviewQueryDto } from './dto';
+} from "@nestjs/common";
+import {
+  Prisma,
+  ReviewType,
+  OrderStatus,
+  SellRequestStatus,
+} from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateReviewDto, ReviewQueryDto } from "./dto";
 
 @Injectable()
 export class ReviewsService {
@@ -19,7 +24,9 @@ export class ReviewsService {
       });
 
       if (!order) {
-        throw new BadRequestException('완료된 주문만 리뷰를 작성할 수 있습니다.');
+        throw new BadRequestException(
+          "완료된 주문만 리뷰를 작성할 수 있습니다.",
+        );
       }
 
       // 이미 리뷰 작성 여부 확인
@@ -28,7 +35,7 @@ export class ReviewsService {
       });
 
       if (existingReview) {
-        throw new BadRequestException('이미 리뷰를 작성하셨습니다.');
+        throw new BadRequestException("이미 리뷰를 작성하셨습니다.");
       }
     }
 
@@ -42,7 +49,9 @@ export class ReviewsService {
       });
 
       if (!sellRequest) {
-        throw new BadRequestException('완료된 판매만 리뷰를 작성할 수 있습니다.');
+        throw new BadRequestException(
+          "완료된 판매만 리뷰를 작성할 수 있습니다.",
+        );
       }
 
       // 이미 리뷰 작성 여부 확인
@@ -51,7 +60,7 @@ export class ReviewsService {
       });
 
       if (existingReview) {
-        throw new BadRequestException('이미 리뷰를 작성하셨습니다.');
+        throw new BadRequestException("이미 리뷰를 작성하셨습니다.");
       }
     }
 
@@ -84,8 +93,8 @@ export class ReviewsService {
     const {
       type,
       search,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
+      sortBy = "createdAt",
+      sortOrder = "desc",
       page = 1,
       limit = 10,
     } = query;
@@ -101,16 +110,16 @@ export class ReviewsService {
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { content: { contains: search, mode: 'insensitive' } },
-        { productModel: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: "insensitive" } },
+        { content: { contains: search, mode: "insensitive" } },
+        { productModel: { contains: search, mode: "insensitive" } },
       ];
     }
 
     const orderBy: Prisma.ReviewOrderByWithRelationInput = {};
-    if (sortBy === 'rating') {
+    if (sortBy === "rating") {
       orderBy.rating = sortOrder;
-    } else if (sortBy === 'likes') {
+    } else if (sortBy === "likes") {
       orderBy.likes = sortOrder;
     } else {
       orderBy.createdAt = sortOrder;
@@ -161,7 +170,7 @@ export class ReviewsService {
     });
 
     if (!review) {
-      throw new NotFoundException('리뷰를 찾을 수 없습니다.');
+      throw new NotFoundException("리뷰를 찾을 수 없습니다.");
     }
 
     return review;
@@ -181,7 +190,7 @@ export class ReviewsService {
     const [reviews, total] = await Promise.all([
       this.prisma.review.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -205,7 +214,7 @@ export class ReviewsService {
     });
 
     if (!review) {
-      throw new NotFoundException('리뷰를 찾을 수 없습니다.');
+      throw new NotFoundException("리뷰를 찾을 수 없습니다.");
     }
 
     await this.prisma.review.update({
@@ -213,7 +222,7 @@ export class ReviewsService {
       data: { likes: { increment: 1 } },
     });
 
-    return { message: '좋아요가 추가되었습니다.' };
+    return { message: "좋아요가 추가되었습니다." };
   }
 
   async delete(userId: string, id: string) {
@@ -222,30 +231,31 @@ export class ReviewsService {
     });
 
     if (!review) {
-      throw new NotFoundException('리뷰를 찾을 수 없습니다.');
+      throw new NotFoundException("리뷰를 찾을 수 없습니다.");
     }
 
     await this.prisma.review.delete({
       where: { id },
     });
 
-    return { message: '리뷰가 삭제되었습니다.' };
+    return { message: "리뷰가 삭제되었습니다." };
   }
 
   async getStats(tenantId: string) {
-    const [totalReviews, avgRating, sellReviews, buyReviews] = await Promise.all([
-      this.prisma.review.count({ where: { tenantId, isPublished: true } }),
-      this.prisma.review.aggregate({
-        where: { tenantId, isPublished: true },
-        _avg: { rating: true },
-      }),
-      this.prisma.review.count({
-        where: { tenantId, isPublished: true, type: ReviewType.SELL },
-      }),
-      this.prisma.review.count({
-        where: { tenantId, isPublished: true, type: ReviewType.BUY },
-      }),
-    ]);
+    const [totalReviews, avgRating, sellReviews, buyReviews] =
+      await Promise.all([
+        this.prisma.review.count({ where: { tenantId, isPublished: true } }),
+        this.prisma.review.aggregate({
+          where: { tenantId, isPublished: true },
+          _avg: { rating: true },
+        }),
+        this.prisma.review.count({
+          where: { tenantId, isPublished: true, type: ReviewType.SELL },
+        }),
+        this.prisma.review.count({
+          where: { tenantId, isPublished: true, type: ReviewType.BUY },
+        }),
+      ]);
 
     return {
       totalReviews,

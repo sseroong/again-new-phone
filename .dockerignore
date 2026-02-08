@@ -1,0 +1,17 @@
+node_modules
+.git
+.github
+.nuxt
+.output
+dist
+*.md
+.env*
+!.env.example
+coverage
+.claude
+.DS_Store
+.vscode
+.idea
+*.log
+tmp
+temp

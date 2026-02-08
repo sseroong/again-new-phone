@@ -1,29 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
-import { ProductStatus, UserRole } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { ForbiddenException } from "@nestjs/common";
+import { ProductStatus, UserRole } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   createMockPrismaService,
   MockPrismaService,
-} from '../test-utils/prisma-mock';
-import { ProductsService } from '../products/products.service';
-import { SellRequestsService } from '../sell-requests/sell-requests.service';
-import { ReviewsService } from '../reviews/reviews.service';
-import { TenantGuard } from './tenant.guard';
+} from "../test-utils/prisma-mock";
+import { ProductsService } from "../products/products.service";
+import { SellRequestsService } from "../sell-requests/sell-requests.service";
+import { ReviewsService } from "../reviews/reviews.service";
+import { TenantGuard } from "./tenant.guard";
 
 // ---------------------------------------------------------------------------
 // 테넌트 격리 통합 테스트
 // ---------------------------------------------------------------------------
-describe('멀티테넌트 데이터 격리', () => {
-  const TENANT_A = 'tenant-a-uuid';
-  const TENANT_B = 'tenant-b-uuid';
-  const USER_A = 'user-a-uuid';
-  const USER_B = 'user-b-uuid';
+describe("멀티테넌트 데이터 격리", () => {
+  const TENANT_A = "tenant-a-uuid";
+  const TENANT_B = "tenant-b-uuid";
+  const USER_A = "user-a-uuid";
+  const USER_B = "user-b-uuid";
 
   // =========================================================================
   // ProductsService 격리
   // =========================================================================
-  describe('ProductsService 격리', () => {
+  describe("ProductsService 격리", () => {
     let service: ProductsService;
     let prisma: MockPrismaService;
 
@@ -44,7 +44,7 @@ describe('멀티테넌트 데이터 격리', () => {
       jest.clearAllMocks();
     });
 
-    it('tenantA의 findAll에 tenantA의 tenantId가 전달된다', async () => {
+    it("tenantA의 findAll에 tenantA의 tenantId가 전달된다", async () => {
       prisma.product.findMany.mockResolvedValue([]);
       prisma.product.count.mockResolvedValue(0);
 
@@ -60,7 +60,7 @@ describe('멀티테넌트 데이터 격리', () => {
       });
     });
 
-    it('tenantB의 tenantId로 조회하면 tenantB의 where 조건이 사용된다', async () => {
+    it("tenantB의 tenantId로 조회하면 tenantB의 where 조건이 사용된다", async () => {
       prisma.product.findMany.mockResolvedValue([]);
       prisma.product.count.mockResolvedValue(0);
 
@@ -76,14 +76,14 @@ describe('멀티테넌트 데이터 격리', () => {
       });
     });
 
-    it('서로 다른 tenantId로 독립적인 쿼리가 실행된다', async () => {
+    it("서로 다른 tenantId로 독립적인 쿼리가 실행된다", async () => {
       const productA = {
-        id: 'product-a',
+        id: "product-a",
         tenantId: TENANT_A,
         status: ProductStatus.AVAILABLE,
       };
       const productB = {
-        id: 'product-b',
+        id: "product-b",
         tenantId: TENANT_B,
         status: ProductStatus.AVAILABLE,
       };
@@ -112,7 +112,7 @@ describe('멀티테넌트 데이터 격리', () => {
   // =========================================================================
   // SellRequestsService 격리
   // =========================================================================
-  describe('SellRequestsService 격리', () => {
+  describe("SellRequestsService 격리", () => {
     let service: SellRequestsService;
     let prisma: MockPrismaService;
 
@@ -133,7 +133,7 @@ describe('멀티테넌트 데이터 격리', () => {
       jest.clearAllMocks();
     });
 
-    it('tenantA의 findAll에 tenantA의 tenantId가 전달된다', async () => {
+    it("tenantA의 findAll에 tenantA의 tenantId가 전달된다", async () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(0);
 
@@ -149,7 +149,7 @@ describe('멀티테넌트 데이터 격리', () => {
       });
     });
 
-    it('사용자와 테넌트 모두 where 조건에 포함된다', async () => {
+    it("사용자와 테넌트 모두 where 조건에 포함된다", async () => {
       prisma.sellRequest.findMany.mockResolvedValue([]);
       prisma.sellRequest.count.mockResolvedValue(0);
 
@@ -169,7 +169,7 @@ describe('멀티테넌트 데이터 격리', () => {
   // =========================================================================
   // ReviewsService 격리
   // =========================================================================
-  describe('ReviewsService 격리', () => {
+  describe("ReviewsService 격리", () => {
     let service: ReviewsService;
     let prisma: MockPrismaService;
 
@@ -190,7 +190,7 @@ describe('멀티테넌트 데이터 격리', () => {
       jest.clearAllMocks();
     });
 
-    it('tenantA의 findAll에 tenantA의 tenantId가 전달된다', async () => {
+    it("tenantA의 findAll에 tenantA의 tenantId가 전달된다", async () => {
       prisma.review.findMany.mockResolvedValue([]);
       prisma.review.count.mockResolvedValue(0);
 
@@ -212,18 +212,18 @@ describe('멀티테넌트 데이터 격리', () => {
       });
     });
 
-    it('테넌트별 독립 조회 확인', async () => {
+    it("테넌트별 독립 조회 확인", async () => {
       const reviewA = {
-        id: 'review-a',
+        id: "review-a",
         tenantId: TENANT_A,
         isPublished: true,
-        user: { id: USER_A, name: '사용자A' },
+        user: { id: USER_A, name: "사용자A" },
       };
       const reviewB = {
-        id: 'review-b',
+        id: "review-b",
         tenantId: TENANT_B,
         isPublished: true,
-        user: { id: USER_B, name: '사용자B' },
+        user: { id: USER_B, name: "사용자B" },
       };
 
       // tenantA 조회
@@ -250,24 +250,22 @@ describe('멀티테넌트 데이터 격리', () => {
   // =========================================================================
   // TenantGuard 접근 제어
   // =========================================================================
-  describe('TenantGuard 접근 제어', () => {
+  describe("TenantGuard 접근 제어", () => {
     let guard: TenantGuard;
     let prisma: MockPrismaService;
 
-    const createMockContext = (user: any, tenantId: string | null) => ({
-      switchToHttp: () => ({
-        getRequest: () => ({ user, tenantId }),
-      }),
-    } as any);
+    const createMockContext = (user: any, tenantId: string | null) =>
+      ({
+        switchToHttp: () => ({
+          getRequest: () => ({ user, tenantId }),
+        }),
+      }) as any;
 
     beforeEach(async () => {
       prisma = createMockPrismaService();
 
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          TenantGuard,
-          { provide: PrismaService, useValue: prisma },
-        ],
+        providers: [TenantGuard, { provide: PrismaService, useValue: prisma }],
       }).compile();
 
       guard = module.get<TenantGuard>(TenantGuard);
@@ -277,18 +275,22 @@ describe('멀티테넌트 데이터 격리', () => {
       jest.clearAllMocks();
     });
 
-    it('SUPER_ADMIN은 모든 테넌트 접근 가능', async () => {
-      const superAdmin = { id: 'super-admin-1', role: UserRole.SUPER_ADMIN };
+    it("SUPER_ADMIN은 모든 테넌트 접근 가능", async () => {
+      const superAdmin = { id: "super-admin-1", role: UserRole.SUPER_ADMIN };
 
-      const resultA = await guard.canActivate(createMockContext(superAdmin, TENANT_A));
-      const resultB = await guard.canActivate(createMockContext(superAdmin, TENANT_B));
+      const resultA = await guard.canActivate(
+        createMockContext(superAdmin, TENANT_A),
+      );
+      const resultB = await guard.canActivate(
+        createMockContext(superAdmin, TENANT_B),
+      );
 
       expect(resultA).toBe(true);
       expect(resultB).toBe(true);
       expect(prisma.userTenant.findUnique).not.toHaveBeenCalled();
     });
 
-    it('일반 사용자의 소속 테넌트 접근 허용', async () => {
+    it("일반 사용자의 소속 테넌트 접근 허용", async () => {
       const user = { id: USER_A, role: UserRole.USER };
       prisma.userTenant.findUnique.mockResolvedValue({
         userId: USER_A,
@@ -310,7 +312,7 @@ describe('멀티테넌트 데이터 격리', () => {
       });
     });
 
-    it('일반 사용자의 비소속 테넌트 접근 차단 (ForbiddenException)', async () => {
+    it("일반 사용자의 비소속 테넌트 접근 차단 (ForbiddenException)", async () => {
       const user = { id: USER_A, role: UserRole.USER };
       prisma.userTenant.findUnique.mockResolvedValue(null);
 
@@ -319,10 +321,10 @@ describe('멀티테넌트 데이터 격리', () => {
       ).rejects.toThrow(ForbiddenException);
       await expect(
         guard.canActivate(createMockContext(user, TENANT_B)),
-      ).rejects.toThrow('해당 테넌트에 대한 접근 권한이 없습니다.');
+      ).rejects.toThrow("해당 테넌트에 대한 접근 권한이 없습니다.");
     });
 
-    it('비활성 UserTenant 레코드의 접근 차단', async () => {
+    it("비활성 UserTenant 레코드의 접근 차단", async () => {
       const user = { id: USER_A, role: UserRole.USER };
       prisma.userTenant.findUnique.mockResolvedValue({
         userId: USER_A,
@@ -336,10 +338,10 @@ describe('멀티테넌트 데이터 격리', () => {
       ).rejects.toThrow(ForbiddenException);
       await expect(
         guard.canActivate(createMockContext(user, TENANT_A)),
-      ).rejects.toThrow('해당 테넌트에 대한 접근 권한이 없습니다.');
+      ).rejects.toThrow("해당 테넌트에 대한 접근 권한이 없습니다.");
     });
 
-    it('테넌트 정보가 없으면 차단', async () => {
+    it("테넌트 정보가 없으면 차단", async () => {
       const user = { id: USER_A, role: UserRole.USER };
 
       await expect(
@@ -347,10 +349,10 @@ describe('멀티테넌트 데이터 격리', () => {
       ).rejects.toThrow(ForbiddenException);
       await expect(
         guard.canActivate(createMockContext(user, null)),
-      ).rejects.toThrow('테넌트 정보가 없습니다.');
+      ).rejects.toThrow("테넌트 정보가 없습니다.");
     });
 
-    it('Public 엔드포인트는 사용자 없이도 통과', async () => {
+    it("Public 엔드포인트는 사용자 없이도 통과", async () => {
       const result = await guard.canActivate(createMockContext(null, TENANT_A));
 
       expect(result).toBe(true);

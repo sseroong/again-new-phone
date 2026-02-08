@@ -1,4 +1,4 @@
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from "../prisma/prisma.service";
 
 type MockPrismaModel = {
   findUnique: jest.Mock;
@@ -29,9 +29,9 @@ function createMockModel(): MockPrismaModel {
 }
 
 export type MockPrismaService = {
-  [K in keyof PrismaService]: K extends 'executeInTransaction'
+  [K in keyof PrismaService]: K extends "executeInTransaction"
     ? jest.Mock
-    : K extends '$transaction'
+    : K extends "$transaction"
       ? jest.Mock
       : any;
 } & {

@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { CmsContentQueryDto, CmsBannerQueryDto } from './dto';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { CmsContentQueryDto, CmsBannerQueryDto } from "./dto";
 
 @Injectable()
 export class CmsService {
@@ -13,7 +13,7 @@ export class CmsService {
 
     const where: Prisma.ContentWhereInput = {
       tenantId,
-      status: 'PUBLISHED',
+      status: "PUBLISHED",
     };
 
     if (type) where.type = type;
@@ -21,8 +21,8 @@ export class CmsService {
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { content: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: "insensitive" } },
+        { content: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -33,9 +33,9 @@ export class CmsService {
           author: { select: { id: true, name: true } },
         },
         orderBy: [
-          { isPinned: 'desc' },
-          { sortOrder: 'asc' },
-          { createdAt: 'desc' },
+          { isPinned: "desc" },
+          { sortOrder: "asc" },
+          { createdAt: "desc" },
         ],
         skip,
         take: limit,
@@ -63,15 +63,15 @@ export class CmsService {
     });
 
     if (!content) {
-      throw new NotFoundException('콘텐츠를 찾을 수 없습니다.');
+      throw new NotFoundException("콘텐츠를 찾을 수 없습니다.");
     }
 
-    if (content.status !== 'PUBLISHED') {
-      throw new NotFoundException('콘텐츠를 찾을 수 없습니다.');
+    if (content.status !== "PUBLISHED") {
+      throw new NotFoundException("콘텐츠를 찾을 수 없습니다.");
     }
 
     // viewCount 증가 (FAQ 제외)
-    if (content.type !== 'FAQ') {
+    if (content.type !== "FAQ") {
       await this.prisma.content.update({
         where: { id },
         data: { viewCount: { increment: 1 } },
@@ -84,18 +84,15 @@ export class CmsService {
   async findFaqs(tenantId: string, category?: string) {
     const where: Prisma.ContentWhereInput = {
       tenantId,
-      type: 'FAQ',
-      status: 'PUBLISHED',
+      type: "FAQ",
+      status: "PUBLISHED",
     };
 
     if (category) where.category = category;
 
     const faqs = await this.prisma.content.findMany({
       where,
-      orderBy: [
-        { sortOrder: 'asc' },
-        { createdAt: 'asc' },
-      ],
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
     return { data: faqs };
@@ -120,10 +117,7 @@ export class CmsService {
 
     const banners = await this.prisma.banner.findMany({
       where,
-      orderBy: [
-        { sortOrder: 'asc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     });
 
     return { data: banners };

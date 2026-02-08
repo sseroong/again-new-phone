@@ -1,14 +1,7 @@
-import {
-  IsOptional,
-  IsEnum,
-  IsInt,
-  Min,
-  Max,
-  IsString,
-} from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { SellRequestStatus, ProductGrade } from '@prisma/client';
+import { IsOptional, IsEnum, IsInt, Min, Max, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { SellRequestStatus, ProductGrade } from "@prisma/client";
 
 export class AdminSellRequestQueryDto {
   @ApiPropertyOptional({ enum: SellRequestStatus })
@@ -16,7 +9,7 @@ export class AdminSellRequestQueryDto {
   @IsEnum(SellRequestStatus)
   status?: SellRequestStatus;
 
-  @ApiPropertyOptional({ description: '검색어 (모델명, 사용자)' })
+  @ApiPropertyOptional({ description: "검색어 (모델명, 사용자)" })
   @IsOptional()
   @IsString()
   search?: string;
@@ -62,13 +55,13 @@ export class AdminUpdateSellRequestDto {
 }
 
 export class AdminCreateQuoteDto {
-  @ApiProperty({ description: '견적 금액' })
+  @ApiProperty({ description: "견적 금액" })
   @Type(() => Number)
   @IsInt()
   @Min(0)
   price: number;
 
-  @ApiPropertyOptional({ description: '견적 메모' })
+  @ApiPropertyOptional({ description: "견적 메모" })
   @IsOptional()
   @IsString()
   notes?: string;

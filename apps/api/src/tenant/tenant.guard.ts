@@ -1,6 +1,11 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from "@nestjs/common";
+import { UserRole } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -22,7 +27,7 @@ export class TenantGuard implements CanActivate {
     }
 
     if (!tenantId) {
-      throw new ForbiddenException('테넌트 정보가 없습니다.');
+      throw new ForbiddenException("테넌트 정보가 없습니다.");
     }
 
     // UserTenant 테이블에서 소속 확인
@@ -36,7 +41,7 @@ export class TenantGuard implements CanActivate {
     });
 
     if (!userTenant || !userTenant.isActive) {
-      throw new ForbiddenException('해당 테넌트에 대한 접근 권한이 없습니다.');
+      throw new ForbiddenException("해당 테넌트에 대한 접근 권한이 없습니다.");
     }
 
     return true;

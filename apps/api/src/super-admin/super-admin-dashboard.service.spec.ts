@@ -1,28 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   createMockPrismaService,
   MockPrismaService,
-} from '../test-utils/prisma-mock';
-import { SuperAdminDashboardService } from './super-admin-dashboard.service';
-import { SuperAdminDashboardQueryDto } from './dto';
+} from "../test-utils/prisma-mock";
+import { SuperAdminDashboardService } from "./super-admin-dashboard.service";
+import { SuperAdminDashboardQueryDto } from "./dto";
 
-describe('SuperAdminDashboardService', () => {
+describe("SuperAdminDashboardService", () => {
   let service: SuperAdminDashboardService;
   let prisma: MockPrismaService;
 
   const mockTenantStats = [
     {
-      id: 'tenant-1',
-      name: '폰가비',
-      slug: 'phonegabi',
+      id: "tenant-1",
+      name: "폰가비",
+      slug: "phonegabi",
       _count: { users: 10, products: 50, orders: 30 },
     },
     {
-      id: 'tenant-2',
-      name: '테스트',
-      slug: 'test',
+      id: "tenant-2",
+      name: "테스트",
+      slug: "test",
       _count: { users: 5, products: 20, orders: 10 },
     },
   ];
@@ -82,15 +82,15 @@ describe('SuperAdminDashboardService', () => {
   // ---------------------------------------------------------------------------
   // 서비스 정의 확인
   // ---------------------------------------------------------------------------
-  it('서비스가 정의되어 있어야 한다', () => {
+  it("서비스가 정의되어 있어야 한다", () => {
     expect(service).toBeDefined();
   });
 
   // ---------------------------------------------------------------------------
   // getStats
   // ---------------------------------------------------------------------------
-  describe('getStats', () => {
-    it('기본 글로벌 통계를 반환한다', async () => {
+  describe("getStats", () => {
+    it("기본 글로벌 통계를 반환한다", async () => {
       setupDefaultMocks();
 
       const query: SuperAdminDashboardQueryDto = {};
@@ -108,33 +108,33 @@ describe('SuperAdminDashboardService', () => {
       });
     });
 
-    it('반환값 구조가 stats와 tenantStats를 포함한다', async () => {
+    it("반환값 구조가 stats와 tenantStats를 포함한다", async () => {
       setupDefaultMocks();
 
       const query: SuperAdminDashboardQueryDto = {};
       const result = await service.getStats(query);
 
-      expect(result).toHaveProperty('stats');
-      expect(result).toHaveProperty('tenantStats');
-      expect(result.stats).toHaveProperty('totalTenants');
-      expect(result.stats).toHaveProperty('activeTenants');
-      expect(result.stats).toHaveProperty('totalUsers');
-      expect(result.stats).toHaveProperty('totalOrders');
-      expect(result.stats).toHaveProperty('totalRevenue');
+      expect(result).toHaveProperty("stats");
+      expect(result).toHaveProperty("tenantStats");
+      expect(result.stats).toHaveProperty("totalTenants");
+      expect(result.stats).toHaveProperty("activeTenants");
+      expect(result.stats).toHaveProperty("totalUsers");
+      expect(result.stats).toHaveProperty("totalOrders");
+      expect(result.stats).toHaveProperty("totalRevenue");
     });
 
-    it('날짜 필터 적용 시 createdAt/paidAt 조건이 포함된다', async () => {
+    it("날짜 필터 적용 시 createdAt/paidAt 조건이 포함된다", async () => {
       setupDefaultMocks();
 
       const query: SuperAdminDashboardQueryDto = {
-        startDate: '2024-06-01',
-        endDate: '2024-06-30',
+        startDate: "2024-06-01",
+        endDate: "2024-06-30",
       };
       await service.getStats(query);
 
       const expectedDateFilter = {
-        gte: new Date('2024-06-01'),
-        lte: new Date('2024-06-30T23:59:59.999Z'),
+        gte: new Date("2024-06-01"),
+        lte: new Date("2024-06-30T23:59:59.999Z"),
       };
 
       // order.count에 createdAt 필터가 적용되어야 한다
@@ -155,15 +155,15 @@ describe('SuperAdminDashboardService', () => {
       });
     });
 
-    it('startDate만 지정 시 gte 조건만 적용된다', async () => {
+    it("startDate만 지정 시 gte 조건만 적용된다", async () => {
       setupDefaultMocks();
 
-      const query: SuperAdminDashboardQueryDto = { startDate: '2024-06-01' };
+      const query: SuperAdminDashboardQueryDto = { startDate: "2024-06-01" };
       await service.getStats(query);
 
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
-          createdAt: { gte: new Date('2024-06-01') },
+          createdAt: { gte: new Date("2024-06-01") },
           status: { not: OrderStatus.CANCELLED },
         },
       });
@@ -172,20 +172,20 @@ describe('SuperAdminDashboardService', () => {
         _sum: { amount: true },
         where: {
           status: PaymentStatus.COMPLETED,
-          paidAt: { gte: new Date('2024-06-01') },
+          paidAt: { gte: new Date("2024-06-01") },
         },
       });
     });
 
-    it('endDate만 지정 시 lte 조건만 적용된다', async () => {
+    it("endDate만 지정 시 lte 조건만 적용된다", async () => {
       setupDefaultMocks();
 
-      const query: SuperAdminDashboardQueryDto = { endDate: '2024-06-30' };
+      const query: SuperAdminDashboardQueryDto = { endDate: "2024-06-30" };
       await service.getStats(query);
 
       expect(prisma.order.count).toHaveBeenCalledWith({
         where: {
-          createdAt: { lte: new Date('2024-06-30T23:59:59.999Z') },
+          createdAt: { lte: new Date("2024-06-30T23:59:59.999Z") },
           status: { not: OrderStatus.CANCELLED },
         },
       });
@@ -194,12 +194,12 @@ describe('SuperAdminDashboardService', () => {
         _sum: { amount: true },
         where: {
           status: PaymentStatus.COMPLETED,
-          paidAt: { lte: new Date('2024-06-30T23:59:59.999Z') },
+          paidAt: { lte: new Date("2024-06-30T23:59:59.999Z") },
         },
       });
     });
 
-    it('매출이 없을 때 totalRevenue가 0을 반환한다', async () => {
+    it("매출이 없을 때 totalRevenue가 0을 반환한다", async () => {
       setupDefaultMocks({
         totalTenants: 2,
         activeTenants: 1,
@@ -216,7 +216,7 @@ describe('SuperAdminDashboardService', () => {
       expect(result.stats.totalOrders).toBe(0);
     });
 
-    it('테넌트별 통계가 포함된다', async () => {
+    it("테넌트별 통계가 포함된다", async () => {
       setupDefaultMocks();
 
       const query: SuperAdminDashboardQueryDto = {};
@@ -254,11 +254,11 @@ describe('SuperAdminDashboardService', () => {
             },
           },
         },
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: "asc" },
       });
     });
 
-    it('6개의 Prisma 호출이 모두 실행된다', async () => {
+    it("6개의 Prisma 호출이 모두 실행된다", async () => {
       setupDefaultMocks();
 
       const query: SuperAdminDashboardQueryDto = {};
@@ -272,7 +272,7 @@ describe('SuperAdminDashboardService', () => {
       expect(prisma.tenant.findMany).toHaveBeenCalledTimes(1);
     });
 
-    it('tenantId 필터 없이 글로벌 조회를 수행한다', async () => {
+    it("tenantId 필터 없이 글로벌 조회를 수행한다", async () => {
       setupDefaultMocks();
 
       const query: SuperAdminDashboardQueryDto = {};
@@ -280,11 +280,11 @@ describe('SuperAdminDashboardService', () => {
 
       // order.count 호출에 tenantId가 포함되지 않아야 한다
       const orderCountCall = prisma.order.count.mock.calls[0][0];
-      expect(orderCountCall.where).not.toHaveProperty('tenantId');
+      expect(orderCountCall.where).not.toHaveProperty("tenantId");
 
       // payment.aggregate 호출에 tenantId가 포함되지 않아야 한다
       const paymentAggCall = prisma.payment.aggregate.mock.calls[0][0];
-      expect(paymentAggCall.where).not.toHaveProperty('tenantId');
+      expect(paymentAggCall.where).not.toHaveProperty("tenantId");
 
       // user.count 호출에 tenantId가 포함되지 않아야 한다
       expect(prisma.user.count).toHaveBeenCalledWith();

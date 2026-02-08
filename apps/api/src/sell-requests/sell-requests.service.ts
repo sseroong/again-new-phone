@@ -2,14 +2,14 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { Prisma, SellRequestStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+} from "@nestjs/common";
+import { Prisma, SellRequestStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   CreateSellRequestDto,
   SellRequestQueryDto,
   UpdateSellRequestDto,
-} from './dto';
+} from "./dto";
 
 @Injectable()
 export class SellRequestsService {
@@ -49,10 +49,10 @@ export class SellRequestsService {
         where,
         include: {
           quotes: {
-            orderBy: { price: 'desc' },
+            orderBy: { price: "desc" },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -75,13 +75,13 @@ export class SellRequestsService {
       where: { id, userId },
       include: {
         quotes: {
-          orderBy: { price: 'desc' },
+          orderBy: { price: "desc" },
         },
       },
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     return sellRequest;
@@ -93,7 +93,7 @@ export class SellRequestsService {
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     // 진행 중인 상태에서만 수정 가능
@@ -101,7 +101,7 @@ export class SellRequestsService {
       sellRequest.status !== SellRequestStatus.PENDING &&
       sellRequest.status !== SellRequestStatus.QUOTED
     ) {
-      throw new BadRequestException('현재 상태에서는 수정할 수 없습니다.');
+      throw new BadRequestException("현재 상태에서는 수정할 수 없습니다.");
     }
 
     return this.prisma.sellRequest.update({
@@ -116,7 +116,7 @@ export class SellRequestsService {
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     // 검수 전까지만 취소 가능
@@ -127,7 +127,7 @@ export class SellRequestsService {
     ];
 
     if (!cancelableStatuses.includes(sellRequest.status)) {
-      throw new BadRequestException('현재 상태에서는 취소할 수 없습니다.');
+      throw new BadRequestException("현재 상태에서는 취소할 수 없습니다.");
     }
 
     await this.prisma.sellRequest.update({
@@ -135,7 +135,7 @@ export class SellRequestsService {
       data: { status: SellRequestStatus.CANCELLED },
     });
 
-    return { message: '판매 접수가 취소되었습니다.' };
+    return { message: "판매 접수가 취소되었습니다." };
   }
 
   async acceptQuote(userId: string, id: string, quoteId: string) {
@@ -145,17 +145,17 @@ export class SellRequestsService {
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     if (sellRequest.status !== SellRequestStatus.QUOTED) {
-      throw new BadRequestException('견적 수락 가능한 상태가 아닙니다.');
+      throw new BadRequestException("견적 수락 가능한 상태가 아닙니다.");
     }
 
     const quote = sellRequest.quotes.find((q) => q.id === quoteId);
 
     if (!quote) {
-      throw new NotFoundException('견적을 찾을 수 없습니다.');
+      throw new NotFoundException("견적을 찾을 수 없습니다.");
     }
 
     await this.prisma.executeInTransaction(async (tx) => {
@@ -175,7 +175,7 @@ export class SellRequestsService {
       });
     });
 
-    return { message: '견적이 수락되었습니다.' };
+    return { message: "견적이 수락되었습니다." };
   }
 
   async addTrackingNumber(userId: string, id: string, trackingNumber: string) {
@@ -184,11 +184,11 @@ export class SellRequestsService {
     });
 
     if (!sellRequest) {
-      throw new NotFoundException('판매 접수를 찾을 수 없습니다.');
+      throw new NotFoundException("판매 접수를 찾을 수 없습니다.");
     }
 
     if (sellRequest.status !== SellRequestStatus.ACCEPTED) {
-      throw new BadRequestException('송장번호를 등록할 수 없는 상태입니다.');
+      throw new BadRequestException("송장번호를 등록할 수 없는 상태입니다.");
     }
 
     return this.prisma.sellRequest.update({
@@ -212,7 +212,7 @@ export class SellRequestsService {
     const model = await this.prisma.deviceModel.findFirst({
       where: {
         brand: brand as any,
-        name: { contains: modelName, mode: 'insensitive' },
+        name: { contains: modelName, mode: "insensitive" },
       },
     });
 

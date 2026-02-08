@@ -3,13 +3,13 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../prisma/prisma.service';
-import { RegisterDto, LoginDto } from './dto';
-import { JwtPayload } from './strategies/jwt.strategy';
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
+import * as bcrypt from "bcrypt";
+import { PrismaService } from "../prisma/prisma.service";
+import { RegisterDto, LoginDto } from "./dto";
+import { JwtPayload } from "./strategies/jwt.strategy";
 
 @Injectable()
 export class AuthService {
@@ -26,7 +26,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('이미 사용중인 이메일입니다.');
+      throw new ConflictException("이미 사용중인 이메일입니다.");
     }
 
     // 비밀번호 해시
@@ -70,18 +70,22 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+      throw new UnauthorizedException(
+        "이메일 또는 비밀번호가 올바르지 않습니다.",
+      );
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('비활성화된 계정입니다.');
+      throw new UnauthorizedException("비활성화된 계정입니다.");
     }
 
     // 비밀번호 검증
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+      throw new UnauthorizedException(
+        "이메일 또는 비밀번호가 올바르지 않습니다.",
+      );
     }
 
     // 마지막 로그인 시간 업데이트
@@ -124,7 +128,7 @@ export class AuthService {
       });
     }
 
-    return { message: '로그아웃 되었습니다.' };
+    return { message: "로그아웃 되었습니다." };
   }
 
   async refreshTokens(refreshToken: string) {
@@ -135,18 +139,18 @@ export class AuthService {
     });
 
     if (!storedToken) {
-      throw new UnauthorizedException('유효하지 않은 토큰입니다.');
+      throw new UnauthorizedException("유효하지 않은 토큰입니다.");
     }
 
     if (new Date() > storedToken.expiresAt) {
       await this.prisma.refreshToken.delete({
         where: { id: storedToken.id },
       });
-      throw new UnauthorizedException('토큰이 만료되었습니다.');
+      throw new UnauthorizedException("토큰이 만료되었습니다.");
     }
 
     if (!storedToken.user.isActive) {
-      throw new UnauthorizedException('비활성화된 계정입니다.');
+      throw new UnauthorizedException("비활성화된 계정입니다.");
     }
 
     // 기존 토큰 삭제
@@ -179,15 +183,17 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new BadRequestException('사용자를 찾을 수 없습니다.');
+      throw new BadRequestException("사용자를 찾을 수 없습니다.");
     }
 
     return user;
   }
 
   private async generateTokens(payload: JwtPayload) {
-    const accessTokenExpiry = this.configService.get<string>('JWT_ACCESS_EXPIRY') || '15m';
-    const refreshTokenExpiry = this.configService.get<string>('JWT_REFRESH_EXPIRY') || '7d';
+    const accessTokenExpiry =
+      this.configService.get<string>("JWT_ACCESS_EXPIRY") || "15m";
+    const refreshTokenExpiry =
+      this.configService.get<string>("JWT_REFRESH_EXPIRY") || "7d";
 
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: accessTokenExpiry,

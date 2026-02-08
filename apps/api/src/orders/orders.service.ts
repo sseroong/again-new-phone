@@ -3,11 +3,16 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Prisma, OrderStatus, ProductStatus, PaymentStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateOrderDto, OrderQueryDto, ConfirmPaymentDto } from './dto';
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import {
+  Prisma,
+  OrderStatus,
+  ProductStatus,
+  PaymentStatus,
+} from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { CreateOrderDto, OrderQueryDto, ConfirmPaymentDto } from "./dto";
 
 @Injectable()
 export class OrdersService {
@@ -26,7 +31,7 @@ export class OrdersService {
     });
 
     if (products.length !== productIds.length) {
-      throw new BadRequestException('일부 상품을 찾을 수 없습니다.');
+      throw new BadRequestException("일부 상품을 찾을 수 없습니다.");
     }
 
     // 상품 상태 확인
@@ -35,7 +40,7 @@ export class OrdersService {
     );
 
     if (unavailableProducts.length > 0) {
-      throw new BadRequestException('일부 상품이 판매 불가 상태입니다.');
+      throw new BadRequestException("일부 상품이 판매 불가 상태입니다.");
     }
 
     // 총 금액 계산
@@ -128,7 +133,7 @@ export class OrdersService {
           },
           payment: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -166,7 +171,7 @@ export class OrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+      throw new NotFoundException("주문을 찾을 수 없습니다.");
     }
 
     return order;
@@ -191,7 +196,7 @@ export class OrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+      throw new NotFoundException("주문을 찾을 수 없습니다.");
     }
 
     return order;
@@ -204,7 +209,7 @@ export class OrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+      throw new NotFoundException("주문을 찾을 수 없습니다.");
     }
 
     // 결제 완료 후에는 취소 불가
@@ -212,7 +217,9 @@ export class OrdersService {
       order.status !== OrderStatus.PENDING_PAYMENT &&
       order.payment?.status === PaymentStatus.COMPLETED
     ) {
-      throw new BadRequestException('결제 완료된 주문은 취소할 수 없습니다. 고객센터에 문의해주세요.');
+      throw new BadRequestException(
+        "결제 완료된 주문은 취소할 수 없습니다. 고객센터에 문의해주세요.",
+      );
     }
 
     // 트랜잭션으로 취소 처리
@@ -231,7 +238,7 @@ export class OrdersService {
       });
     });
 
-    return { message: '주문이 취소되었습니다.' };
+    return { message: "주문이 취소되었습니다." };
   }
 
   async confirmPayment(dto: ConfirmPaymentDto) {
@@ -243,45 +250,50 @@ export class OrdersService {
     });
 
     if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다.');
+      throw new NotFoundException("주문을 찾을 수 없습니다.");
     }
 
     if (order.status !== OrderStatus.PENDING_PAYMENT) {
-      throw new BadRequestException('결제 대기 상태가 아닙니다.');
+      throw new BadRequestException("결제 대기 상태가 아닙니다.");
     }
 
     // 금액 검증
     if (order.totalAmount !== amount) {
-      throw new BadRequestException('결제 금액이 일치하지 않습니다.');
+      throw new BadRequestException("결제 금액이 일치하지 않습니다.");
     }
 
     // 토스페이먼츠 결제 승인 API 호출
-    const tossSecretKey = this.configService.get<string>('TOSS_SECRET_KEY');
-    const encodedKey = Buffer.from(`${tossSecretKey}:`).toString('base64');
+    const tossSecretKey = this.configService.get<string>("TOSS_SECRET_KEY");
+    const encodedKey = Buffer.from(`${tossSecretKey}:`).toString("base64");
 
     let tossResponse: any;
     try {
-      const response = await fetch('https://api.tosspayments.com/v1/payments/confirm', {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${encodedKey}`,
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        "https://api.tosspayments.com/v1/payments/confirm",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${encodedKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ paymentKey, orderId: orderNumber, amount }),
         },
-        body: JSON.stringify({ paymentKey, orderId: orderNumber, amount }),
-      });
+      );
 
       tossResponse = await response.json();
 
       if (!response.ok) {
-        this.logger.error(`토스 결제 승인 실패: ${JSON.stringify(tossResponse)}`);
+        this.logger.error(
+          `토스 결제 승인 실패: ${JSON.stringify(tossResponse)}`,
+        );
         throw new BadRequestException(
-          tossResponse.message || '결제 승인에 실패했습니다.',
+          tossResponse.message || "결제 승인에 실패했습니다.",
         );
       }
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       this.logger.error(`토스 API 호출 오류: ${error}`);
-      throw new BadRequestException('결제 승인 중 오류가 발생했습니다.');
+      throw new BadRequestException("결제 승인 중 오류가 발생했습니다.");
     }
 
     // 트랜잭션으로 결제 확정
@@ -290,7 +302,7 @@ export class OrdersService {
       const paymentData = {
         status: PaymentStatus.COMPLETED,
         transactionId: paymentKey,
-        pgProvider: 'TOSS',
+        pgProvider: "TOSS",
         pgResponse: tossResponse as any,
         paidAt: new Date(),
       };
@@ -304,7 +316,9 @@ export class OrdersService {
         await tx.payment.create({
           data: {
             orderId: order.id,
-            method: (tossResponse.method === '카드' ? 'CARD' : 'BANK_TRANSFER') as any,
+            method: (tossResponse.method === "카드"
+              ? "CARD"
+              : "BANK_TRANSFER") as any,
             tenantId: order.tenantId,
             amount: order.totalAmount,
             ...paymentData,
@@ -333,12 +347,12 @@ export class OrdersService {
       });
     });
 
-    return { message: '결제가 완료되었습니다.', orderNumber };
+    return { message: "결제가 완료되었습니다.", orderNumber };
   }
 
   private generateOrderNumber(): string {
     const date = new Date();
-    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+    const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
     const random = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `ORD${dateStr}${random}`;
   }

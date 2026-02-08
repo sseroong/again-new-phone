@@ -3,11 +3,11 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
-} from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { DEFAULT_TENANT_ID } from '@phone-marketplace/shared';
-import { TenantQueryDto, CreateTenantDto, UpdateTenantDto } from './dto';
+} from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { DEFAULT_TENANT_ID } from "@phone-marketplace/shared";
+import { TenantQueryDto, CreateTenantDto, UpdateTenantDto } from "./dto";
 
 @Injectable()
 export class SuperAdminTenantsService {
@@ -22,8 +22,8 @@ export class SuperAdminTenantsService {
 
     if (query.search) {
       where.OR = [
-        { name: { contains: query.search, mode: 'insensitive' } },
-        { slug: { contains: query.search, mode: 'insensitive' } },
+        { name: { contains: query.search, mode: "insensitive" } },
+        { slug: { contains: query.search, mode: "insensitive" } },
       ];
     }
 
@@ -37,7 +37,7 @@ export class SuperAdminTenantsService {
         include: {
           _count: { select: { users: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -68,7 +68,7 @@ export class SuperAdminTenantsService {
     });
 
     if (!tenant) {
-      throw new NotFoundException('테넌트를 찾을 수 없습니다.');
+      throw new NotFoundException("테넌트를 찾을 수 없습니다.");
     }
 
     return tenant;
@@ -85,15 +85,18 @@ export class SuperAdminTenantsService {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
         const target = (error.meta?.target as string[]) || [];
-        if (target.includes('slug')) {
-          throw new ConflictException('이미 사용 중인 slug입니다.');
+        if (target.includes("slug")) {
+          throw new ConflictException("이미 사용 중인 slug입니다.");
         }
-        if (target.includes('domain')) {
-          throw new ConflictException('이미 사용 중인 도메인입니다.');
+        if (target.includes("domain")) {
+          throw new ConflictException("이미 사용 중인 도메인입니다.");
         }
-        throw new ConflictException('중복된 값이 존재합니다.');
+        throw new ConflictException("중복된 값이 존재합니다.");
       }
       throw error;
     }
@@ -102,7 +105,7 @@ export class SuperAdminTenantsService {
   async update(id: string, dto: UpdateTenantDto) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id } });
     if (!tenant) {
-      throw new NotFoundException('테넌트를 찾을 수 없습니다.');
+      throw new NotFoundException("테넌트를 찾을 수 없습니다.");
     }
 
     try {
@@ -111,15 +114,18 @@ export class SuperAdminTenantsService {
         data: dto,
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
         const target = (error.meta?.target as string[]) || [];
-        if (target.includes('slug')) {
-          throw new ConflictException('이미 사용 중인 slug입니다.');
+        if (target.includes("slug")) {
+          throw new ConflictException("이미 사용 중인 slug입니다.");
         }
-        if (target.includes('domain')) {
-          throw new ConflictException('이미 사용 중인 도메인입니다.');
+        if (target.includes("domain")) {
+          throw new ConflictException("이미 사용 중인 도메인입니다.");
         }
-        throw new ConflictException('중복된 값이 존재합니다.');
+        throw new ConflictException("중복된 값이 존재합니다.");
       }
       throw error;
     }
@@ -127,12 +133,12 @@ export class SuperAdminTenantsService {
 
   async remove(id: string) {
     if (id === DEFAULT_TENANT_ID) {
-      throw new BadRequestException('기본 테넌트는 삭제할 수 없습니다.');
+      throw new BadRequestException("기본 테넌트는 삭제할 수 없습니다.");
     }
 
     const tenant = await this.prisma.tenant.findUnique({ where: { id } });
     if (!tenant) {
-      throw new NotFoundException('테넌트를 찾을 수 없습니다.');
+      throw new NotFoundException("테넌트를 찾을 수 없습니다.");
     }
 
     return this.prisma.tenant.update({

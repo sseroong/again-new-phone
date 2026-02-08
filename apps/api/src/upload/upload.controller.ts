@@ -5,40 +5,51 @@ import {
   UploadedFiles,
   UseGuards,
   BadRequestException,
-} from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiConsumes, ApiBody, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { UserRole } from '@prisma/client';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UploadService } from './upload.service';
+} from "@nestjs/common";
+import { FilesInterceptor } from "@nestjs/platform-express";
+import {
+  ApiTags,
+  ApiConsumes,
+  ApiBody,
+  ApiBearerAuth,
+  ApiOperation,
+} from "@nestjs/swagger";
+import { UserRole } from "@prisma/client";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { UploadService } from "./upload.service";
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-@ApiTags('upload')
+@ApiTags("upload")
 @ApiBearerAuth()
-@Controller('upload')
+@Controller("upload")
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post('images')
+  @Post("images")
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UseInterceptors(
-    FilesInterceptor('files', 10, {
+    FilesInterceptor("files", 10, {
       limits: { fileSize: MAX_FILE_SIZE },
     }),
   )
-  @ApiOperation({ summary: '이미지 업로드 (최대 10장, 5MB/장)' })
-  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: "이미지 업로드 (최대 10장, 5MB/장)" })
+  @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
-      type: 'object',
+      type: "object",
       properties: {
         files: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
+          type: "array",
+          items: { type: "string", format: "binary" },
         },
       },
     },

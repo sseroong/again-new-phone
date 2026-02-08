@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   AdminCmsContentQueryDto,
   AdminCreateContentDto,
@@ -8,7 +8,7 @@ import {
   AdminCmsBannerQueryDto,
   AdminCreateBannerDto,
   AdminUpdateBannerDto,
-} from './dto';
+} from "./dto";
 
 @Injectable()
 export class AdminCmsService {
@@ -30,8 +30,8 @@ export class AdminCmsService {
 
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { content: { contains: search, mode: 'insensitive' } },
+        { title: { contains: search, mode: "insensitive" } },
+        { content: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -42,9 +42,9 @@ export class AdminCmsService {
           author: { select: { id: true, name: true } },
         },
         orderBy: [
-          { isPinned: 'desc' },
-          { sortOrder: 'asc' },
-          { createdAt: 'desc' },
+          { isPinned: "desc" },
+          { sortOrder: "asc" },
+          { createdAt: "desc" },
         ],
         skip,
         take: limit,
@@ -72,13 +72,17 @@ export class AdminCmsService {
     });
 
     if (!content) {
-      throw new NotFoundException('콘텐츠를 찾을 수 없습니다.');
+      throw new NotFoundException("콘텐츠를 찾을 수 없습니다.");
     }
 
     return content;
   }
 
-  async createContent(tenantId: string, authorId: string, dto: AdminCreateContentDto) {
+  async createContent(
+    tenantId: string,
+    authorId: string,
+    dto: AdminCreateContentDto,
+  ) {
     return this.prisma.content.create({
       data: {
         tenantId,
@@ -93,7 +97,7 @@ export class AdminCmsService {
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
         sortOrder: dto.sortOrder ?? 0,
         isPinned: dto.isPinned ?? false,
-        status: dto.status ?? 'DRAFT',
+        status: dto.status ?? "DRAFT",
       },
       include: {
         author: { select: { id: true, name: true } },
@@ -104,7 +108,7 @@ export class AdminCmsService {
   async updateContent(id: string, dto: AdminUpdateContentDto) {
     const content = await this.prisma.content.findUnique({ where: { id } });
     if (!content) {
-      throw new NotFoundException('콘텐츠를 찾을 수 없습니다.');
+      throw new NotFoundException("콘텐츠를 찾을 수 없습니다.");
     }
 
     const data: Prisma.ContentUpdateInput = {};
@@ -131,15 +135,15 @@ export class AdminCmsService {
   async removeContent(id: string) {
     const content = await this.prisma.content.findUnique({ where: { id } });
     if (!content) {
-      throw new NotFoundException('콘텐츠를 찾을 수 없습니다.');
+      throw new NotFoundException("콘텐츠를 찾을 수 없습니다.");
     }
 
     await this.prisma.content.update({
       where: { id },
-      data: { status: 'ARCHIVED' },
+      data: { status: "ARCHIVED" },
     });
 
-    return { message: '콘텐츠가 보관 처리되었습니다.' };
+    return { message: "콘텐츠가 보관 처리되었습니다." };
   }
 
   // ---------------------------------------------------------------------------
@@ -158,10 +162,7 @@ export class AdminCmsService {
     const [banners, total] = await Promise.all([
       this.prisma.banner.findMany({
         where,
-        orderBy: [
-          { sortOrder: 'asc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
         skip,
         take: limit,
       }),
@@ -182,7 +183,7 @@ export class AdminCmsService {
   async findOneBanner(id: string) {
     const banner = await this.prisma.banner.findUnique({ where: { id } });
     if (!banner) {
-      throw new NotFoundException('배너를 찾을 수 없습니다.');
+      throw new NotFoundException("배너를 찾을 수 없습니다.");
     }
     return banner;
   }
@@ -194,7 +195,7 @@ export class AdminCmsService {
         title: dto.title,
         imageUrl: dto.imageUrl,
         linkUrl: dto.linkUrl,
-        position: dto.position ?? 'MAIN_TOP',
+        position: dto.position ?? "MAIN_TOP",
         isActive: dto.isActive ?? true,
         sortOrder: dto.sortOrder ?? 0,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
@@ -206,7 +207,7 @@ export class AdminCmsService {
   async updateBanner(id: string, dto: AdminUpdateBannerDto) {
     const banner = await this.prisma.banner.findUnique({ where: { id } });
     if (!banner) {
-      throw new NotFoundException('배너를 찾을 수 없습니다.');
+      throw new NotFoundException("배너를 찾을 수 없습니다.");
     }
 
     const data: Prisma.BannerUpdateInput = {};
@@ -228,7 +229,7 @@ export class AdminCmsService {
   async removeBanner(id: string) {
     const banner = await this.prisma.banner.findUnique({ where: { id } });
     if (!banner) {
-      throw new NotFoundException('배너를 찾을 수 없습니다.');
+      throw new NotFoundException("배너를 찾을 수 없습니다.");
     }
 
     await this.prisma.banner.update({
@@ -236,6 +237,6 @@ export class AdminCmsService {
       data: { isActive: false },
     });
 
-    return { message: '배너가 비활성화되었습니다.' };
+    return { message: "배너가 비활성화되었습니다." };
   }
 }

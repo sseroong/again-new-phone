@@ -2,10 +2,10 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { Prisma, UserRole } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { AdminUserQueryDto, AdminUpdateUserDto } from './dto';
+} from "@nestjs/common";
+import { Prisma, UserRole } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { AdminUserQueryDto, AdminUpdateUserDto } from "./dto";
 
 @Injectable()
 export class AdminUsersService {
@@ -22,8 +22,8 @@ export class AdminUsersService {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -47,7 +47,7 @@ export class AdminUsersService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -90,7 +90,7 @@ export class AdminUsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      throw new NotFoundException("사용자를 찾을 수 없습니다.");
     }
 
     return user;
@@ -102,12 +102,16 @@ export class AdminUsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      throw new NotFoundException("사용자를 찾을 수 없습니다.");
     }
 
     // SUPER_ADMIN은 다른 관리자만 변경 가능 (자기 자신 보호)
-    if (user.role === UserRole.SUPER_ADMIN && dto.role && dto.role !== UserRole.SUPER_ADMIN) {
-      throw new BadRequestException('최고 관리자의 역할은 변경할 수 없습니다.');
+    if (
+      user.role === UserRole.SUPER_ADMIN &&
+      dto.role &&
+      dto.role !== UserRole.SUPER_ADMIN
+    ) {
+      throw new BadRequestException("최고 관리자의 역할은 변경할 수 없습니다.");
     }
 
     const updateData: Prisma.UserUpdateInput = {};

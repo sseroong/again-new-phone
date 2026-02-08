@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { OrderStatus, PaymentStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { SuperAdminDashboardQueryDto } from './dto';
+import { Injectable } from "@nestjs/common";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { SuperAdminDashboardQueryDto } from "./dto";
 
 @Injectable()
 export class SuperAdminDashboardService {
@@ -53,7 +53,7 @@ export class SuperAdminDashboardService {
             },
           },
         },
-        orderBy: { createdAt: 'asc' },
+        orderBy: { createdAt: "asc" },
       }),
     ]);
 
@@ -78,7 +78,7 @@ export class SuperAdminDashboardService {
         filter.createdAt.gte = new Date(query.startDate);
       }
       if (query.endDate) {
-        filter.createdAt.lte = new Date(query.endDate + 'T23:59:59.999Z');
+        filter.createdAt.lte = new Date(query.endDate + "T23:59:59.999Z");
       }
     }
 

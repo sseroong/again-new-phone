@@ -1,14 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { ExecutionContext, ForbiddenException } from "@nestjs/common";
+import { UserRole } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
 import {
   createMockPrismaService,
   MockPrismaService,
-} from '../test-utils/prisma-mock';
-import { TenantGuard } from './tenant.guard';
+} from "../test-utils/prisma-mock";
+import { TenantGuard } from "./tenant.guard";
 
-describe('TenantGuard', () => {
+describe("TenantGuard", () => {
   let guard: TenantGuard;
   let prisma: MockPrismaService;
 
@@ -33,12 +33,12 @@ describe('TenantGuard', () => {
     prisma = mockPrisma;
   });
 
-  it('가드가 정의되어 있는지', () => {
+  it("가드가 정의되어 있는지", () => {
     expect(guard).toBeDefined();
   });
 
-  it('Public 엔드포인트(user 없음)는 통과한다', async () => {
-    const context = createMockContext(null, 'default-tenant');
+  it("Public 엔드포인트(user 없음)는 통과한다", async () => {
+    const context = createMockContext(null, "default-tenant");
 
     const result = await guard.canActivate(context);
 
@@ -46,9 +46,9 @@ describe('TenantGuard', () => {
     expect(prisma.userTenant.findUnique).not.toHaveBeenCalled();
   });
 
-  it('SUPER_ADMIN은 모든 테넌트에 접근 가능하다', async () => {
-    const superAdmin = { id: 'admin-1', role: UserRole.SUPER_ADMIN };
-    const context = createMockContext(superAdmin, 'any-tenant');
+  it("SUPER_ADMIN은 모든 테넌트에 접근 가능하다", async () => {
+    const superAdmin = { id: "admin-1", role: UserRole.SUPER_ADMIN };
+    const context = createMockContext(superAdmin, "any-tenant");
 
     const result = await guard.canActivate(context);
 
@@ -56,24 +56,24 @@ describe('TenantGuard', () => {
     expect(prisma.userTenant.findUnique).not.toHaveBeenCalled();
   });
 
-  it('tenantId가 없으면 ForbiddenException을 던진다', async () => {
-    const user = { id: 'user-1', role: UserRole.USER };
+  it("tenantId가 없으면 ForbiddenException을 던진다", async () => {
+    const user = { id: "user-1", role: UserRole.USER };
     const context = createMockContext(user, undefined);
 
     await expect(guard.canActivate(context)).rejects.toThrow(
       ForbiddenException,
     );
     await expect(guard.canActivate(context)).rejects.toThrow(
-      '테넌트 정보가 없습니다.',
+      "테넌트 정보가 없습니다.",
     );
   });
 
-  it('UserTenant에 소속된 사용자는 통과한다', async () => {
-    const user = { id: 'user-1', role: UserRole.USER };
-    const context = createMockContext(user, 'tenant-1');
+  it("UserTenant에 소속된 사용자는 통과한다", async () => {
+    const user = { id: "user-1", role: UserRole.USER };
+    const context = createMockContext(user, "tenant-1");
     prisma.userTenant.findUnique.mockResolvedValue({
-      userId: 'user-1',
-      tenantId: 'tenant-1',
+      userId: "user-1",
+      tenantId: "tenant-1",
       isActive: true,
       role: UserRole.USER,
     });
@@ -84,32 +84,32 @@ describe('TenantGuard', () => {
     expect(prisma.userTenant.findUnique).toHaveBeenCalledWith({
       where: {
         userId_tenantId: {
-          userId: 'user-1',
-          tenantId: 'tenant-1',
+          userId: "user-1",
+          tenantId: "tenant-1",
         },
       },
     });
   });
 
-  it('UserTenant에 소속되지 않은 사용자는 ForbiddenException', async () => {
-    const user = { id: 'user-1', role: UserRole.USER };
-    const context = createMockContext(user, 'tenant-1');
+  it("UserTenant에 소속되지 않은 사용자는 ForbiddenException", async () => {
+    const user = { id: "user-1", role: UserRole.USER };
+    const context = createMockContext(user, "tenant-1");
     prisma.userTenant.findUnique.mockResolvedValue(null);
 
     await expect(guard.canActivate(context)).rejects.toThrow(
       ForbiddenException,
     );
     await expect(guard.canActivate(context)).rejects.toThrow(
-      '해당 테넌트에 대한 접근 권한이 없습니다.',
+      "해당 테넌트에 대한 접근 권한이 없습니다.",
     );
   });
 
-  it('비활성 UserTenant이면 ForbiddenException', async () => {
-    const user = { id: 'user-1', role: UserRole.USER };
-    const context = createMockContext(user, 'tenant-1');
+  it("비활성 UserTenant이면 ForbiddenException", async () => {
+    const user = { id: "user-1", role: UserRole.USER };
+    const context = createMockContext(user, "tenant-1");
     prisma.userTenant.findUnique.mockResolvedValue({
-      userId: 'user-1',
-      tenantId: 'tenant-1',
+      userId: "user-1",
+      tenantId: "tenant-1",
       isActive: false,
       role: UserRole.USER,
     });
@@ -119,12 +119,12 @@ describe('TenantGuard', () => {
     );
   });
 
-  it('ADMIN 역할도 UserTenant 소속 확인이 필요하다', async () => {
-    const admin = { id: 'admin-1', role: UserRole.ADMIN };
-    const context = createMockContext(admin, 'tenant-1');
+  it("ADMIN 역할도 UserTenant 소속 확인이 필요하다", async () => {
+    const admin = { id: "admin-1", role: UserRole.ADMIN };
+    const context = createMockContext(admin, "tenant-1");
     prisma.userTenant.findUnique.mockResolvedValue({
-      userId: 'admin-1',
-      tenantId: 'tenant-1',
+      userId: "admin-1",
+      tenantId: "tenant-1",
       isActive: true,
       role: UserRole.ADMIN,
     });

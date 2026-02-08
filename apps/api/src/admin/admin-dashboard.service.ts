@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { OrderStatus, SellRequestStatus, PaymentStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
-import { DashboardQueryDto } from './dto';
+import { Injectable } from "@nestjs/common";
+import { OrderStatus, SellRequestStatus, PaymentStatus } from "@prisma/client";
+import { PrismaService } from "../prisma/prisma.service";
+import { DashboardQueryDto } from "./dto";
 
 @Injectable()
 export class AdminDashboardService {
@@ -51,7 +51,7 @@ export class AdminDashboardService {
       this.prisma.order.findMany({
         where: { tenantId },
         take: 5,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: { select: { id: true, name: true, email: true } },
           items: {
@@ -68,7 +68,7 @@ export class AdminDashboardService {
       this.prisma.sellRequest.findMany({
         where: { tenantId },
         take: 5,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: { select: { id: true, name: true, email: true } },
         },
@@ -96,7 +96,7 @@ export class AdminDashboardService {
         filter.createdAt.gte = new Date(query.startDate);
       }
       if (query.endDate) {
-        filter.createdAt.lte = new Date(query.endDate + 'T23:59:59.999Z');
+        filter.createdAt.lte = new Date(query.endDate + "T23:59:59.999Z");
       }
     }
 
