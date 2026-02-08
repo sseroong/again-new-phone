@@ -9,11 +9,12 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // CORS 설정
+  const corsOrigins = [
+    process.env.WEB_URL || 'http://localhost:3000',
+    process.env.ADMIN_URL || 'http://localhost:3002',
+  ];
   app.enableCors({
-    origin: [
-      'http://localhost:3000', // Web
-      'http://localhost:3002', // Admin
-    ],
+    origin: corsOrigins,
     credentials: true,
   });
 

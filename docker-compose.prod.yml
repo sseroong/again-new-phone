@@ -1,0 +1,170 @@
+version: "3.8"
+
+services:
+  # ============================================
+  # Traefik Reverse Proxy
+  # ============================================
+  traefik:
+    image: traefik:v3.0
+    container_name: pm-traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+      # HTTP → HTTPS redirect
+      - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+      # Let's Encrypt
+      - "--certificatesResolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesResolvers.letsencrypt.acme.storage=/certificates/acme.json"
+      - "--certificatesResolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certificates:/certificates
+    networks:
+      - pm-public
+    labels:
+      # Dashboard
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entryPoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certResolver=letsencrypt"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
+
+  # ============================================
+  # PostgreSQL
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: pm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - pm-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Redis
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: pm-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - pm-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # API (NestJS)
+  # ============================================
+  api:
+    image: ghcr.io/${GITHUB_REPOSITORY}/api:latest
+    container_name: pm-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      WEB_URL: https://${DOMAIN}
+      ADMIN_URL: https://admin.${DOMAIN}
+      TOSS_CLIENT_KEY: ${TOSS_CLIENT_KEY}
+      TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
+      PORT: 3001
+    volumes:
+      - uploads-data:/app/apps/api/uploads
+    networks:
+      - pm-public
+      - pm-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.${DOMAIN}`)"
+      - "traefik.http.routers.api.entryPoints=websecure"
+      - "traefik.http.routers.api.tls.certResolver=letsencrypt"
+      - "traefik.http.services.api.loadbalancer.server.port=3001"
+
+  # ============================================
+  # Web (Nuxt 3)
+  # ============================================
+  web:
+    image: ghcr.io/${GITHUB_REPOSITORY}/web:latest
+    container_name: pm-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      NUXT_PUBLIC_API_BASE_URL: https://api.${DOMAIN}/api
+    networks:
+      - pm-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.web.entryPoints=websecure"
+      - "traefik.http.routers.web.tls.certResolver=letsencrypt"
+      - "traefik.http.services.web.loadbalancer.server.port=3000"
+
+  # ============================================
+  # Admin (Nuxt 3)
+  # ============================================
+  admin:
+    image: ghcr.io/${GITHUB_REPOSITORY}/admin:latest
+    container_name: pm-admin
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      NUXT_PUBLIC_API_BASE_URL: https://api.${DOMAIN}/api
+    networks:
+      - pm-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin.rule=Host(`admin.${DOMAIN}`)"
+      - "traefik.http.routers.admin.entryPoints=websecure"
+      - "traefik.http.routers.admin.tls.certResolver=letsencrypt"
+      - "traefik.http.services.admin.loadbalancer.server.port=3002"
+
+volumes:
+  postgres-data:
+  redis-data:
+  uploads-data:
+  traefik-certificates:
+
+networks:
+  pm-public:
+    driver: bridge
+  pm-internal:
+    driver: bridge
+    internal: true

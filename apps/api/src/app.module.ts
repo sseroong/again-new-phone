@@ -12,6 +12,7 @@ import { AdminModule } from './admin/admin.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { UploadModule } from './upload/upload.module';
 import { CmsModule } from './cms/cms.module';
+import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './tenant/tenant.module';
 import { TenantMiddleware } from './tenant/tenant.middleware';
@@ -22,7 +23,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     // 환경 변수 설정
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../.env',
+      envFilePath: process.env.NODE_ENV === 'production' ? undefined : '../../.env',
     }),
 
     // 데이터베이스
@@ -43,6 +44,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     SuperAdminModule,
     UploadModule,
     CmsModule,
+    HealthModule,
   ],
   providers: [
     // 전역 JWT 인증 가드
