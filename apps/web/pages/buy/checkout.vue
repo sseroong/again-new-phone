@@ -16,9 +16,18 @@ const apiBase = config.public.apiBaseUrl as string;
 const tossClientKey = config.public.tossClientKey as string;
 const authStore = useAuthStore();
 
+// 단일상품(productId) 또는 장바구니(productIds) 지원
 const productId = route.query.productId as string;
+const productIdsParam = route.query.productIds as string;
+const isCartCheckout = !!productIdsParam;
 
-if (!productId) {
+const targetProductIds = computed(() => {
+  if (isCartCheckout) return productIdsParam.split(',').filter(Boolean);
+  if (productId) return [productId];
+  return [];
+});
+
+if (targetProductIds.value.length === 0) {
   navigateTo('/buy');
 }
 
@@ -26,11 +35,24 @@ const authHeaders = computed(() => ({
   Authorization: `Bearer ${authStore.tokens?.accessToken}`,
 }));
 
-// 상품 정보 조회
-const { data: product } = await useAsyncData(
-  `checkout-product-${productId}`,
-  () => $fetch<any>(`${apiBase}/products/${productId}`),
+// 복수 상품 정보 조회
+const { data: products } = await useAsyncData(
+  `checkout-products-${targetProductIds.value.join('-')}`,
+  () => Promise.all(
+    targetProductIds.value.map(id => $fetch<any>(`${apiBase}/products/${id}`)),
+  ),
 );
+
+// 총 금액
+const totalAmount = computed(() =>
+  (products.value || []).reduce((sum: number, p: any) => sum + (p.sellingPrice || 0), 0),
+);
+
+// 이미지 URL
+function getImageUrl(path: string): string {
+  if (path.startsWith('http')) return path;
+  return `${apiBase}${path}`;
+}
 
 // 배송지 목록 조회
 const { data: addresses } = await useAsyncData(
@@ -75,14 +97,14 @@ const errorMessage = ref('');
 
 // 결제 위젯 초기화 (클라이언트 사이드에서만)
 onMounted(async () => {
-  if (!product.value) return;
+  if (!products.value?.length) return;
 
   try {
     const customerKey = authStore.user?.id || ANONYMOUS;
     const widget = await loadPaymentWidget(tossClientKey, customerKey);
     paymentWidget.value = widget;
 
-    const amount = product.value.sellingPrice || 0;
+    const amount = totalAmount.value;
 
     // 결제 수단 UI 렌더링
     const paymentMethodWidget = widget.renderPaymentMethods(
@@ -125,9 +147,9 @@ const handlePayment = async () => {
   let createdOrderId = '';
 
   try {
-    // 1. 주문 생성
+    // 1. 주문 생성 (복수 상품 지원)
     const body: Record<string, any> = {
-      items: [{ productId, quantity: 1 }],
+      items: targetProductIds.value.map(id => ({ productId: id, quantity: 1 })),
       shippingName: shippingForm.shippingName,
       shippingPhone: shippingForm.shippingPhone,
       shippingZipCode: shippingForm.shippingZipCode,
@@ -146,10 +168,12 @@ const handlePayment = async () => {
 
     createdOrderId = order.id;
 
-    // 2. 결제 요청 (위젯에서 선택한 결제 수단으로 진행)
-    const orderName = product.value?.model?.name
-      ? `${product.value.model.name} ${product.value.variant?.storage || ''}`
-      : '상품 구매';
+    // 2. 결제 요청
+    const orderName = products.value && products.value.length > 1
+      ? `${products.value[0].model?.name} 외 ${products.value.length - 1}건`
+      : products.value?.[0]?.model?.name
+        ? `${products.value[0].model.name} ${products.value[0].variant?.storage || ''}`
+        : '상품 구매';
 
     await paymentWidget.value.requestPayment({
       orderId: order.orderNumber,
@@ -160,6 +184,12 @@ const handlePayment = async () => {
       customerName: shippingForm.shippingName,
       customerMobilePhone: shippingForm.shippingPhone.replace(/-/g, ''),
     });
+
+    // 장바구니에서 온 경우 결제 성공 시 장바구니 비우기
+    if (isCartCheckout) {
+      const cartStore = useCartStore();
+      cartStore.removeItems(targetProductIds.value);
+    }
   } catch (e: any) {
     // 결제 실패 시 생성된 주문 취소 (상품 상태 AVAILABLE 복원)
     if (createdOrderId) {
@@ -201,7 +231,7 @@ const handlePayment = async () => {
       </div>
     </div>
 
-    <div v-if="!product" class="max-w-4xl mx-auto px-4 py-12 text-center">
+    <div v-if="!products?.length" class="max-w-4xl mx-auto px-4 py-12 text-center">
       <p class="text-gray-500">상품 정보를 불러올 수 없습니다.</p>
       <UButton to="/buy" variant="outline" class="mt-4">구매 목록으로</UButton>
     </div>
@@ -218,26 +248,39 @@ const handlePayment = async () => {
 
       <!-- 주문 상품 정보 -->
       <div class="bg-white rounded-xl p-6">
-        <h2 class="text-lg font-bold mb-4">주문 상품</h2>
-        <div class="flex items-center gap-4">
-          <div class="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <UIcon name="i-heroicons-device-phone-mobile" class="w-10 h-10 text-gray-300" />
-          </div>
-          <div class="flex-1">
-            <p class="font-medium">{{ product.model?.name }} {{ product.variant?.storage }}</p>
-            <p class="text-sm text-gray-500">{{ product.variant?.color }}</p>
-            <div class="flex items-center gap-2 mt-1">
-              <span v-if="product.grade" class="text-xs bg-gray-100 px-2 py-0.5 rounded">
-                {{ product.grade }}등급
-              </span>
-              <span v-if="product.batteryHealth" class="text-xs text-gray-500">
-                배터리 {{ product.batteryHealth }}%
-              </span>
+        <h2 class="text-lg font-bold mb-4">주문 상품 ({{ products.length }}개)</h2>
+        <div class="space-y-4">
+          <div
+            v-for="(product, idx) in products"
+            :key="product.id"
+            class="flex items-center gap-4"
+            :class="{ 'pb-4 border-b border-gray-100': idx < products.length - 1 }"
+          >
+            <div class="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <img
+                v-if="product.images?.length"
+                :src="getImageUrl(product.images[0])"
+                :alt="product.model?.name"
+                class="w-full h-full object-cover"
+              />
+              <UIcon v-else name="i-heroicons-device-phone-mobile" class="w-10 h-10 text-gray-300" />
             </div>
+            <div class="flex-1">
+              <p class="font-medium">{{ product.model?.name }} {{ product.variant?.storage }}</p>
+              <p class="text-sm text-gray-500">{{ product.variant?.color }}</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span v-if="product.grade" class="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                  {{ product.grade }}등급
+                </span>
+                <span v-if="product.batteryHealth" class="text-xs text-gray-500">
+                  배터리 {{ product.batteryHealth }}%
+                </span>
+              </div>
+            </div>
+            <p class="text-xl font-bold text-primary-600">
+              {{ product.sellingPrice?.toLocaleString() }}원
+            </p>
           </div>
-          <p class="text-xl font-bold text-primary-600">
-            {{ product.sellingPrice?.toLocaleString() }}원
-          </p>
         </div>
       </div>
 
@@ -305,8 +348,8 @@ const handlePayment = async () => {
         <h2 class="text-lg font-bold mb-4">결제 금액</h2>
         <div class="space-y-3">
           <div class="flex justify-between">
-            <span class="text-gray-600">상품 금액</span>
-            <span>{{ product.sellingPrice?.toLocaleString() }}원</span>
+            <span class="text-gray-600">상품 금액 ({{ products.length }}개)</span>
+            <span>{{ totalAmount.toLocaleString() }}원</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">배송비</span>
@@ -315,7 +358,7 @@ const handlePayment = async () => {
           <div class="border-t pt-3 flex justify-between">
             <span class="font-bold text-lg">총 결제금액</span>
             <span class="font-bold text-xl text-primary-600">
-              {{ product.sellingPrice?.toLocaleString() }}원
+              {{ totalAmount.toLocaleString() }}원
             </span>
           </div>
         </div>
@@ -329,7 +372,7 @@ const handlePayment = async () => {
         :disabled="!widgetReady"
         @click="handlePayment"
       >
-        {{ product.sellingPrice?.toLocaleString() }}원 결제하기
+        {{ totalAmount.toLocaleString() }}원 결제하기
       </UButton>
     </div>
   </div>

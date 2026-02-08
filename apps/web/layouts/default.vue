@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const route = useRoute();
 const authStore = useAuthStore();
+const cartStore = useCartStore();
 
 // 네비게이션 메뉴 항목
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
 // 사용자 메뉴 항목
 const userMenuItems = [
   [
+    { label: '장바구니', to: '/my/cart', icon: 'i-heroicons-shopping-cart' },
     { label: '나의 거래내역', to: '/my/transactions', icon: 'i-heroicons-document-text' },
     { label: '나의 리뷰', to: '/my/reviews', icon: 'i-heroicons-chat-bubble-left-right' },
     { label: '내 기기 관리', to: '/my/devices', icon: 'i-heroicons-device-phone-mobile' },
@@ -65,6 +67,17 @@ const isActiveTab = (to: string) => {
           <!-- Right Actions -->
           <div class="flex items-center gap-4">
             <template v-if="authStore.isAuthenticated">
+              <!-- 장바구니 아이콘 -->
+              <NuxtLink to="/my/cart" class="relative text-gray-600 hover:text-gray-900">
+                <UIcon name="i-heroicons-shopping-cart" class="w-6 h-6" />
+                <span
+                  v-if="cartStore.itemCount > 0"
+                  class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                >
+                  {{ cartStore.itemCount > 9 ? '9+' : cartStore.itemCount }}
+                </span>
+              </NuxtLink>
+
               <UDropdown :items="userMenuItems" :popper="{ placement: 'bottom-end' }">
                 <button class="text-sm text-gray-600 hover:text-gray-900 font-medium">
                   {{ authStore.user?.name }}님
