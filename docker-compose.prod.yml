@@ -101,7 +101,7 @@ services:
       TOSS_SECRET_KEY: ${TOSS_SECRET_KEY}
       PORT: 3001
     volumes:
-      - uploads-data:/app/apps/api/uploads
+      - uploads-data:/app/uploads
     networks:
       - pm-public
       - pm-internal

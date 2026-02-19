@@ -57,8 +57,8 @@ COPY --from=build /app/packages/shared/dist/ packages/shared/dist/
 # Copy built API
 COPY --from=build /app/apps/api/dist/ apps/api/dist/
 
-# Create uploads directory
-RUN mkdir -p apps/api/uploads && chown -R nestjs:nestjs apps/api/uploads
+# Create uploads directory (process.cwd() = /app → /app/uploads/products)
+RUN mkdir -p uploads/products && chown -R nestjs:nestjs uploads
 
 USER nestjs
 
