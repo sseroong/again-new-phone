@@ -35,8 +35,7 @@ test-results/
 playwright-report/
 blob-report/
 
-# Prisma
-prisma/migrations/
+# Prisma (migrations는 프로덕션 배포에 필요하므로 git에 포함)
 
 # Docker
 docker-compose.override.yml
