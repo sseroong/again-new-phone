@@ -38,39 +38,21 @@ RUN pnpm db:generate
 COPY apps/api/ apps/api/
 RUN pnpm --filter @phone-marketplace/api build
 
-# Copy Prisma generated client to a known location for production stage
-RUN mkdir -p /prisma-generated && \
-    find node_modules -path "*/.prisma/client" -type d -exec cp -r {} /prisma-generated/ \;
-
 # ============================================
 # Stage 4: Production image
 # ============================================
-FROM node:20-alpine AS production
-
-RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
-WORKDIR /app
+FROM base AS production
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nestjs && \
     adduser --system --uid 1001 nestjs
 
-# Copy workspace config for prod install
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
-COPY apps/api/package.json apps/api/
-COPY packages/shared/package.json packages/shared/
-RUN mkdir -p apps/web apps/admin packages/ui
-COPY apps/web/package.json apps/web/
-COPY apps/admin/package.json apps/admin/
-COPY packages/ui/package.json packages/ui/
-
-RUN pnpm install --frozen-lockfile --prod
+# Copy Prisma schema and generate client (pnpm 경로 호환 보장)
+COPY --from=build /app/prisma/ prisma/
+RUN pnpm db:generate
 
 # Copy built shared package
 COPY --from=build /app/packages/shared/dist/ packages/shared/dist/
-
-# Copy Prisma schema + generated client
-COPY --from=build /app/prisma/ prisma/
-COPY --from=build /prisma-generated/client/ node_modules/.prisma/client/
 
 # Copy built API
 COPY --from=build /app/apps/api/dist/ apps/api/dist/
