@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { Prisma, ProductStatus } from "@prisma/client";
+import { OrderStatus, Prisma, ProductStatus } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ProductQueryDto } from "./dto";
 
@@ -248,6 +248,58 @@ export class ProductsService {
         variant: true,
       },
       orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+  }
+
+  async getProductStats(tenantId: string) {
+    const [availableCount, reviewStats, completedOrderCount] =
+      await Promise.all([
+        this.prisma.product.count({
+          where: { tenantId, status: ProductStatus.AVAILABLE },
+        }),
+        this.prisma.review.aggregate({
+          where: { tenantId, type: "BUY", isPublished: true },
+          _avg: { rating: true },
+          _count: { id: true },
+        }),
+        this.prisma.order.count({
+          where: { tenantId, status: OrderStatus.COMPLETED },
+        }),
+      ]);
+
+    return {
+      availableCount,
+      averageRating: reviewStats._avg.rating
+        ? Math.round(reviewStats._avg.rating * 10) / 10
+        : 0,
+      reviewCount: reviewStats._count.id,
+      completedOrderCount,
+    };
+  }
+
+  async getRecommendedProducts(
+    tenantId: string,
+    category?: string,
+    limit = 8,
+  ) {
+    const where: Prisma.ProductWhereInput = {
+      tenantId,
+      status: ProductStatus.AVAILABLE,
+    };
+
+    if (category) {
+      where.category = { type: category as any };
+    }
+
+    return this.prisma.product.findMany({
+      where,
+      include: {
+        category: true,
+        model: true,
+        variant: true,
+      },
+      orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
       take: limit,
     });
   }
