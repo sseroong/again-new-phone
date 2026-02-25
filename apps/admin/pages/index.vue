@@ -2,7 +2,23 @@
 definePageMeta({ middleware: 'admin-auth' });
 useHead({ title: '대시보드' });
 
-const { data: stats, pending } = useAdminApi<any>('/admin/dashboard');
+const startDate = ref('');
+const endDate = ref('');
+
+const queryString = computed(() => {
+  const params = new URLSearchParams();
+  if (startDate.value) params.set('startDate', startDate.value);
+  if (endDate.value) params.set('endDate', endDate.value);
+  const qs = params.toString();
+  return `/admin/dashboard${qs ? '?' + qs : ''}`;
+});
+
+const { data: stats, pending, refresh } = useAdminApi<any>(queryString);
+
+function clearDateFilter() {
+  startDate.value = '';
+  endDate.value = '';
+}
 
 const orderStatusColor: Record<string, string> = {
   PENDING_PAYMENT: 'gray',
@@ -57,7 +73,23 @@ function formatDate(date: string) {
 
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">대시보드</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">대시보드</h1>
+      <!-- 날짜 필터 -->
+      <div class="flex items-center gap-2">
+        <UInput v-model="startDate" type="date" size="sm" class="w-40" placeholder="시작일" />
+        <span class="text-gray-400">~</span>
+        <UInput v-model="endDate" type="date" size="sm" class="w-40" placeholder="종료일" />
+        <UButton
+          v-if="startDate || endDate"
+          variant="ghost"
+          color="gray"
+          icon="i-heroicons-x-mark"
+          size="xs"
+          @click="clearDateFilter"
+        />
+      </div>
+    </div>
 
     <div v-if="pending" class="flex justify-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
@@ -73,7 +105,7 @@ function formatDate(date: string) {
             </div>
             <div>
               <p class="text-sm text-gray-500">총 주문</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stats.totalOrders?.toLocaleString() }}</p>
+              <p class="text-2xl font-bold text-gray-900">{{ stats.stats?.totalOrders?.toLocaleString() }}</p>
             </div>
           </div>
         </div>
@@ -85,7 +117,7 @@ function formatDate(date: string) {
             </div>
             <div>
               <p class="text-sm text-gray-500">총 매출</p>
-              <p class="text-2xl font-bold text-gray-900">{{ formatPrice(stats.totalRevenue || 0) }}</p>
+              <p class="text-2xl font-bold text-gray-900">{{ formatPrice(stats.stats?.totalRevenue || 0) }}</p>
             </div>
           </div>
         </div>
@@ -97,7 +129,7 @@ function formatDate(date: string) {
             </div>
             <div>
               <p class="text-sm text-gray-500">활성 회원</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stats.activeUsers?.toLocaleString() }}</p>
+              <p class="text-2xl font-bold text-gray-900">{{ stats.stats?.activeUsers?.toLocaleString() }}</p>
             </div>
           </div>
         </div>
@@ -109,7 +141,7 @@ function formatDate(date: string) {
             </div>
             <div>
               <p class="text-sm text-gray-500">대기 판매접수</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stats.pendingSellRequests?.toLocaleString() }}</p>
+              <p class="text-2xl font-bold text-gray-900">{{ stats.stats?.pendingSellRequests?.toLocaleString() }}</p>
             </div>
           </div>
         </div>
@@ -161,7 +193,7 @@ function formatDate(date: string) {
               class="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors"
             >
               <div>
-                <p class="text-sm font-medium text-gray-900">{{ sr.deviceName || '기기' }}</p>
+                <p class="text-sm font-medium text-gray-900">{{ sr.modelName || '기기' }}</p>
                 <p class="text-xs text-gray-500">{{ sr.user?.name }} &middot; {{ formatDate(sr.createdAt) }}</p>
               </div>
               <UBadge :color="sellStatusColor[sr.status] || 'gray'" variant="subtle" size="xs">
