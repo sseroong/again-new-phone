@@ -1,6 +1,6 @@
 export default defineAppConfig({
   ui: {
-    primary: 'blue',
+    primary: 'ddak-orange',
     gray: 'slate',
 
     // 버튼 기본 스타일

@@ -62,7 +62,7 @@ async function handleSubmit() {
 
     <form class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 max-w-2xl space-y-6" @submit.prevent="handleSubmit">
       <UFormGroup label="테넌트 이름" required>
-        <UInput v-model="form.name" placeholder="예: 폰마켓 부산점" @blur="!form.slug && generateSlug()" />
+        <UInput v-model="form.name" placeholder="예: 딱내폰 부산점" @blur="!form.slug && generateSlug()" />
       </UFormGroup>
 
       <UFormGroup label="Slug (URL 식별자)" required hint="소문자, 숫자, 하이픈만 사용">

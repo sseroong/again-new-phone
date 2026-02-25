@@ -42,7 +42,7 @@ test.describe('상품 탐색', () => {
 
   test('푸터가 올바르게 표시된다', async ({ page }) => {
     await safeGoto(page, '/');
-    await expect(page.getByText('폰마켓 고객센터')).toBeVisible();
+    await expect(page.getByText('딱내폰 고객센터')).toBeVisible();
     await expect(page.getByRole('link', { name: '이용약관' })).toBeVisible();
     await expect(page.getByRole('link', { name: '개인정보 처리방침' })).toBeVisible();
   });

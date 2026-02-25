@@ -17,14 +17,14 @@ export default defineNuxtConfig({
     public: {
       apiBaseUrl: process.env.API_URL || 'http://localhost:3001/api',
       tossClientKey: process.env.TOSS_CLIENT_KEY || process.env.NUXT_PUBLIC_TOSS_CLIENT_KEY || 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm',
-      siteName: '폰마켓',
-      siteDescription: '중고 전자기기 거래 플랫폼',
+      siteName: '딱내폰',
+      siteDescription: '검증된 중고 전자기기 거래 플랫폼',
     },
   },
 
   app: {
     head: {
-      title: '폰마켓 | 중고폰 판매/구매 플랫폼',
+      title: '딱내폰 | 검증된 중고폰 거래 플랫폼',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },

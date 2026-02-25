@@ -4,7 +4,7 @@ import { dismissOverlay, safeGoto, safeFill } from '../fixtures/auth.fixture';
 test.describe('관리자 인증', () => {
   test('관리자 로그인 페이지가 표시된다', async ({ page }) => {
     await safeGoto(page, '/login');
-    await expect(page.getByRole('heading', { name: '폰마켓 관리자' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '딱내폰 관리자' })).toBeVisible();
     await expect(page.getByPlaceholder('admin@phonegabi.com')).toBeVisible();
     await expect(page.getByPlaceholder('비밀번호 입력')).toBeVisible();
   });

@@ -45,6 +45,8 @@ docker-compose.override.yml
 
 # Screenshots / analysis images
 *.png
+!apps/web/public/images/*.png
+!apps/admin/public/images/*.png
 
 # Claude Code
 .claude/
