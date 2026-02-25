@@ -1,6 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
-import { SellRequestStatus } from "@prisma/client";
+import {
+  SellRequestStatus,
+  DeviceCategory,
+  Brand,
+  ProductGrade,
+  TradeMethod,
+} from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   createMockPrismaService,
@@ -60,6 +66,142 @@ describe("AdminSellRequestsService", () => {
   // 1. 서비스가 정의되어 있는지
   it("서비스가 정의되어 있어야 한다", () => {
     expect(service).toBeDefined();
+  });
+
+  // --- create ---
+  describe("create", () => {
+    const createDto = {
+      userId: "user-1",
+      category: DeviceCategory.SMARTPHONE,
+      brand: Brand.APPLE,
+      modelName: "iPhone 15 Pro",
+      storage: "256GB",
+      selfGrade: ProductGrade.A,
+      estimatedPrice: 800000,
+      tradeMethod: TradeMethod.COURIER,
+    };
+
+    const mockCreatedSellRequest = {
+      id: "sell-req-new",
+      tenantId,
+      ...createDto,
+      color: null,
+      deviceCondition: {},
+      inspectionNotes: null,
+      status: SellRequestStatus.PENDING,
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      user: { id: "user-1", name: "홍길동", email: "hong@example.com" },
+    };
+
+    it("판매접수를 정상 생성한다 (필수 필드)", async () => {
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.sellRequest.create.mockResolvedValue(mockCreatedSellRequest);
+
+      const result = await service.create(tenantId, createDto);
+
+      expect(result).toEqual(mockCreatedSellRequest);
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "user-1" },
+      });
+      expect(prisma.sellRequest.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          tenantId,
+          userId: "user-1",
+          category: DeviceCategory.SMARTPHONE,
+          brand: Brand.APPLE,
+          modelName: "iPhone 15 Pro",
+          storage: "256GB",
+          selfGrade: ProductGrade.A,
+          estimatedPrice: 800000,
+          tradeMethod: TradeMethod.COURIER,
+        }),
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      });
+    });
+
+    it("선택 필드 포함하여 생성한다", async () => {
+      const dtoWithOptionals = {
+        ...createDto,
+        color: "블랙",
+        deviceCondition: { scratch: true, dent: false },
+        inspectionNotes: "액정 상태 양호",
+      };
+
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.sellRequest.create.mockResolvedValue({
+        ...mockCreatedSellRequest,
+        color: "블랙",
+        deviceCondition: { scratch: true, dent: false },
+        inspectionNotes: "액정 상태 양호",
+      });
+
+      await service.create(tenantId, dtoWithOptionals);
+
+      expect(prisma.sellRequest.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          color: "블랙",
+          deviceCondition: { scratch: true, dent: false },
+          inspectionNotes: "액정 상태 양호",
+        }),
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      });
+    });
+
+    it("존재하지 않는 userId면 NotFoundException을 던진다", async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.create(tenantId, { ...createDto, userId: "non-existent" }),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        service.create(tenantId, { ...createDto, userId: "non-existent" }),
+      ).rejects.toThrow("사용자를 찾을 수 없습니다.");
+    });
+
+    it("tenantId가 데이터에 포함된다", async () => {
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.sellRequest.create.mockResolvedValue(mockCreatedSellRequest);
+
+      await service.create(tenantId, createDto);
+
+      expect(prisma.sellRequest.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ tenantId }),
+        include: expect.any(Object),
+      });
+    });
+
+    it("반환값에 user 관계가 포함된다", async () => {
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.sellRequest.create.mockResolvedValue(mockCreatedSellRequest);
+
+      const result = await service.create(tenantId, createDto);
+
+      expect(result.user).toBeDefined();
+      expect(result.user).toEqual({
+        id: "user-1",
+        name: "홍길동",
+        email: "hong@example.com",
+      });
+    });
+
+    it("deviceCondition이 없으면 빈 객체 기본값을 사용한다", async () => {
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.sellRequest.create.mockResolvedValue(mockCreatedSellRequest);
+
+      await service.create(tenantId, createDto);
+
+      expect(prisma.sellRequest.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          deviceCondition: {},
+        }),
+        include: expect.any(Object),
+      });
+    });
   });
 
   // --- findAll ---

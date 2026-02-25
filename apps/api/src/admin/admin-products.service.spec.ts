@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   createMockPrismaService,
@@ -488,6 +488,154 @@ describe("AdminProductsService", () => {
       );
 
       expect(prisma.product.update).not.toHaveBeenCalled();
+    });
+
+    it("categoryId 변경 시 유효한 카테고리면 성공한다", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.category.findUnique.mockResolvedValue({
+        id: "cat-2",
+        type: "TABLET",
+        name: "태블릿",
+      });
+      prisma.product.update.mockResolvedValue({
+        ...mockUpdatedProduct,
+        categoryId: "cat-2",
+      });
+
+      const result = await service.update("product-1", {
+        categoryId: "cat-2",
+      });
+
+      expect(prisma.category.findUnique).toHaveBeenCalledWith({
+        where: { id: "cat-2" },
+      });
+      expect(prisma.product.update).toHaveBeenCalled();
+      expect(result.categoryId).toBe("cat-2");
+    });
+
+    it("유효하지 않은 categoryId면 BadRequestException", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.category.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.update("product-1", { categoryId: "invalid-cat" }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update("product-1", { categoryId: "invalid-cat" }),
+      ).rejects.toThrow("유효하지 않은 카테고리입니다.");
+    });
+
+    it("modelId 변경 시 유효한 모델이면 성공한다", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.deviceModel.findUnique.mockResolvedValue({
+        id: "model-2",
+        name: "Galaxy S24",
+        brand: "SAMSUNG",
+      });
+      prisma.product.update.mockResolvedValue({
+        ...mockUpdatedProduct,
+        modelId: "model-2",
+      });
+
+      const result = await service.update("product-1", { modelId: "model-2" });
+
+      expect(prisma.deviceModel.findUnique).toHaveBeenCalledWith({
+        where: { id: "model-2" },
+      });
+      expect(result.modelId).toBe("model-2");
+    });
+
+    it("유효하지 않은 modelId면 BadRequestException", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.deviceModel.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.update("product-1", { modelId: "invalid-model" }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update("product-1", { modelId: "invalid-model" }),
+      ).rejects.toThrow("유효하지 않은 모델입니다.");
+    });
+
+    it("variantId 변경 시 유효한 옵션이면 성공한다", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.modelVariant.findUnique.mockResolvedValue({
+        id: "variant-2",
+        storage: "512GB",
+      });
+      prisma.product.update.mockResolvedValue({
+        ...mockUpdatedProduct,
+        variantId: "variant-2",
+      });
+
+      const result = await service.update("product-1", {
+        variantId: "variant-2",
+      });
+
+      expect(prisma.modelVariant.findUnique).toHaveBeenCalledWith({
+        where: { id: "variant-2" },
+      });
+      expect(result.variantId).toBe("variant-2");
+    });
+
+    it("유효하지 않은 variantId면 BadRequestException", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.modelVariant.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.update("product-1", { variantId: "invalid-variant" }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update("product-1", { variantId: "invalid-variant" }),
+      ).rejects.toThrow("유효하지 않은 옵션입니다.");
+    });
+
+    it("imei, serialNumber을 업데이트한다", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.product.update.mockResolvedValue({
+        ...mockUpdatedProduct,
+        imei: "352789109012345",
+        serialNumber: "SN-NEW-001",
+      });
+
+      const result = await service.update("product-1", {
+        imei: "352789109012345",
+        serialNumber: "SN-NEW-001",
+      });
+
+      expect(prisma.product.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            imei: "352789109012345",
+            serialNumber: "SN-NEW-001",
+          }),
+        }),
+      );
+      expect(result.imei).toBe("352789109012345");
+      expect(result.serialNumber).toBe("SN-NEW-001");
+    });
+
+    it("warrantyExpiry, manufactureDate를 Date로 변환하여 업데이트한다", async () => {
+      prisma.product.findUnique.mockResolvedValue(existingProduct);
+      prisma.product.update.mockResolvedValue({
+        ...mockUpdatedProduct,
+        warrantyExpiry: new Date("2025-12-31"),
+        manufactureDate: new Date("2024-06-15"),
+      });
+
+      await service.update("product-1", {
+        warrantyExpiry: "2025-12-31",
+        manufactureDate: "2024-06-15",
+      });
+
+      expect(prisma.product.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            warrantyExpiry: new Date("2025-12-31"),
+            manufactureDate: new Date("2024-06-15"),
+          }),
+        }),
+      );
     });
   });
 
