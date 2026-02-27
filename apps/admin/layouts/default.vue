@@ -41,12 +41,8 @@ const sidebarCollapsed = ref(false);
     >
       <!-- Logo -->
       <div class="flex items-center h-16 px-4 border-b border-gray-800">
-        <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center flex-shrink-0">
-          <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5 text-white" />
-        </div>
-        <span v-if="!sidebarCollapsed" class="ml-3 text-lg font-bold whitespace-nowrap">
-          폰마켓 관리자
-        </span>
+        <img src="/images/logo-horizontal.png" alt="딱내폰 관리자" class="h-7 flex-shrink-0" v-if="!sidebarCollapsed" />
+        <img src="/images/logo-vertical.png" alt="딱내폰" class="h-8 w-8 object-contain flex-shrink-0" v-else />
       </div>
 
       <!-- Navigation -->

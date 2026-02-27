@@ -31,7 +31,7 @@ const userMenuItems = [
 // 더보기 메뉴 항목
 const moreMenuItems = [
   [
-    { label: '폰마켓 소개', to: '/about', icon: 'i-heroicons-information-circle' },
+    { label: '딱내폰 소개', to: '/about', icon: 'i-heroicons-information-circle' },
     { label: '이용방법', to: '/guide', icon: 'i-heroicons-book-open' },
   ],
   [
@@ -58,11 +58,8 @@ const isActiveTab = (to: string) => {
         <!-- Top Bar -->
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <UIcon name="i-heroicons-device-phone-mobile" class="w-5 h-5 text-white" />
-            </div>
-            <span class="text-xl font-bold text-gray-900">폰마켓</span>
+          <NuxtLink to="/" class="flex items-center">
+            <img src="/images/logo-horizontal.png" alt="딱내폰" class="h-9" />
           </NuxtLink>
 
           <!-- Right Actions -->
@@ -148,9 +145,9 @@ const isActiveTab = (to: string) => {
         <div class="flex flex-col sm:flex-row justify-between gap-6 pb-6 border-b border-gray-100">
           <div>
             <p class="text-sm text-gray-600">
-              <span class="font-medium">폰마켓 고객센터</span>
-              <a href="mailto:cs@phonemarket.com" class="text-primary-600 ml-2">
-                cs@phonemarket.com
+              <span class="font-medium">딱내폰 고객센터</span>
+              <a href="mailto:cs@ddakmyphone.com" class="text-primary-600 ml-2">
+                cs@ddakmyphone.com
               </a>
             </p>
             <p class="text-xs text-gray-500 mt-1">
@@ -174,12 +171,12 @@ const isActiveTab = (to: string) => {
         <!-- Bottom Section -->
         <div class="pt-6">
           <p class="text-xs text-gray-400 leading-relaxed">
-            주식회사 폰마켓 | 대표 : 홍길동 | 사업자등록번호 : 000-00-00000<br />
+            딱내폰 | 대표 : 홍길동 | 사업자등록번호 : 000-00-00000<br />
             통신판매업번호 : 0000-서울강남-0000<br />
             서울특별시 강남구 테헤란로 000 00빌딩 00층
           </p>
           <p class="text-xs text-gray-400 mt-4">
-            Copyright @ 2024 PhoneMarket Inc. All rights reserved.
+            Copyright @ 2026 딱내폰. All rights reserved.
           </p>
         </div>
       </div>

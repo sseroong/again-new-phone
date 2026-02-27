@@ -40,10 +40,8 @@ async function handleLogin() {
     <div class="bg-white rounded-xl shadow-lg p-8">
       <!-- Header -->
       <div class="text-center mb-8">
-        <div class="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-          <UIcon name="i-heroicons-cog-6-tooth" class="w-7 h-7 text-white" />
-        </div>
-        <h1 class="text-2xl font-bold text-gray-900">폰마켓 관리자</h1>
+        <img src="/images/logo-vertical.png" alt="딱내폰" class="h-16 mx-auto mb-4" />
+        <h1 class="text-2xl font-bold text-gray-900">딱내폰 관리자</h1>
         <p class="text-sm text-gray-500 mt-1">관리자 계정으로 로그인하세요</p>
       </div>
 

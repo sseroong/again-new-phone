@@ -41,7 +41,7 @@
   }
 
   .trust-badge-quality {
-    @apply bg-blue-100 text-blue-700;
+    @apply bg-ddak-orange-100 text-ddak-orange-700;
   }
 
   .trust-badge-verified {

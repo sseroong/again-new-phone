@@ -12,17 +12,17 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBaseUrl: process.env.API_URL || 'http://localhost:3001/api',
-      siteName: '폰마켓 관리자',
+      siteName: '딱내폰 관리자',
     },
   },
 
   app: {
     head: {
-      title: '폰마켓 관리자',
+      title: '딱내폰 관리자',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'description', content: '폰마켓 관리자 백오피스' },
+        { name: 'description', content: '딱내폰 관리자 백오피스' },
       ],
     },
   },
