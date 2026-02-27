@@ -73,7 +73,7 @@ watch(bannerList, () => {
           <img
             :src="banner.imageUrl"
             :alt="banner.title"
-            class="w-full h-48 sm:h-64 md:h-72 object-cover"
+            class="w-full h-32 sm:h-44 md:h-48 object-cover"
           />
         </button>
       </div>
@@ -82,7 +82,7 @@ watch(bannerList, () => {
         v-if="bannerList.length"
         :src="bannerList[0].imageUrl"
         :alt="bannerList[0].title"
-        class="w-full h-48 sm:h-64 md:h-72 object-cover invisible"
+        class="w-full h-32 sm:h-44 md:h-48 object-cover invisible"
       />
     </div>
 

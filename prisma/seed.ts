@@ -5,6 +5,48 @@ const prisma = new PrismaClient();
 
 const DEFAULT_TENANT_ID = 'default-tenant';
 
+// ========== Unsplash 이미지 URL (카테고리별) ==========
+const PHONE_IMAGES = [
+  'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1580910051074-3eb694886571?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1591337676887-a217a6c8c8d4?w=600&h=600&fit=crop',
+];
+
+const TABLET_IMAGES = [
+  'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1561154464-82e9aeb93fe5?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1542751110-97427bbecf20?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1632882765546-1ee75f53becb?w=600&h=600&fit=crop',
+];
+
+const WATCH_IMAGES = [
+  'https://images.unsplash.com/photo-1546868871-af0de0ae72be?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1617043786394-f977fa12eddf?w=600&h=600&fit=crop',
+];
+
+const LAPTOP_IMAGES = [
+  'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1611186871348-b1ce696e52c9?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=600&h=600&fit=crop',
+];
+
+const EARPHONE_IMAGES = [
+  'https://images.unsplash.com/photo-1590658268037-6bf12f032f55?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1613040809024-b4ef7ba99bc3?w=600&h=600&fit=crop',
+];
+
 async function main() {
   console.log('🌱 Seeding database...');
 
@@ -84,6 +126,8 @@ async function main() {
   const smartphoneCategory = categories[0];
   const tabletCategory = categories[1];
   const watchCategory = categories[2];
+  const laptopCategory = categories[3];
+  const earphoneCategory = categories[4];
 
   // 2. 기기 모델 생성
   console.log('📱 Creating device models...');
@@ -280,17 +324,18 @@ async function main() {
     }
   }
 
-  // 5. 샘플 상품 생성
-  console.log('🛍️ Creating sample products...');
+  // 5. 샘플 상품 생성 (기존 3개 + 신규 47개 = 총 50개)
+  console.log('🛍️ Creating 50 sample products...');
 
+  // 기존 3개 상품 (이미지 업데이트)
   await prisma.product.upsert({
     where: { imei: '352918114359485' },
-    update: { status: ProductStatus.AVAILABLE },
+    update: { status: ProductStatus.AVAILABLE, images: [PHONE_IMAGES[0], PHONE_IMAGES[1]] },
     create: {
       tenantId: DEFAULT_TENANT_ID,
       categoryId: smartphoneCategory.id,
       modelId: iphone15Pro.id,
-      variantId: iPhone15ProVariants[1].id, // 256GB 내추럴 티타늄
+      variantId: iPhone15ProVariants[1].id,
       grade: ProductGrade.S_PLUS,
       sellingPrice: 1350000,
       batteryHealth: 100,
@@ -298,33 +343,33 @@ async function main() {
       manufactureDate: new Date('2023-09-01'),
       imei: '352918114359485',
       description: '풀박스 미개봉급 상품입니다. 액정 기스 없음, 측면 테두리 매우 깨끗함.',
-      images: ['/images/products/iphone15pro-1.jpg', '/images/products/iphone15pro-2.jpg'],
+      images: [PHONE_IMAGES[0], PHONE_IMAGES[1]],
       rating: 5.0,
     },
   });
 
   await prisma.product.upsert({
     where: { imei: '352918114359486' },
-    update: { status: ProductStatus.AVAILABLE },
+    update: { status: ProductStatus.AVAILABLE, images: [PHONE_IMAGES[2]] },
     create: {
       tenantId: DEFAULT_TENANT_ID,
       categoryId: smartphoneCategory.id,
       modelId: iphone15Pro.id,
-      variantId: iPhone15ProVariants[3].id, // 256GB 블루 티타늄
+      variantId: iPhone15ProVariants[3].id,
       grade: ProductGrade.A,
       sellingPrice: 1180000,
       batteryHealth: 95,
       manufactureDate: new Date('2023-10-15'),
       imei: '352918114359486',
       description: '사용감 있으나 상태 양호합니다. 액정 미세기스, 측면 미세 사용흔적.',
-      images: ['/images/products/iphone15pro-blue-1.jpg'],
+      images: [PHONE_IMAGES[2]],
       rating: 4.8,
     },
   });
 
   await prisma.product.upsert({
     where: { imei: '352918114359487' },
-    update: { status: ProductStatus.AVAILABLE },
+    update: { status: ProductStatus.AVAILABLE, images: [PHONE_IMAGES[3]] },
     create: {
       tenantId: DEFAULT_TENANT_ID,
       categoryId: smartphoneCategory.id,
@@ -336,9 +381,550 @@ async function main() {
       manufactureDate: new Date('2024-02-01'),
       imei: '352918114359487',
       description: '거의 새제품급 상품입니다. S펜 포함, 정품 케이스 포함.',
-      images: ['/images/products/s24ultra-1.jpg'],
+      images: [PHONE_IMAGES[3]],
       rating: 4.9,
     },
+  });
+
+  // ========== 신규 47개 상품 추가 ==========
+
+  // 헬퍼: 모델 → 변형 → 상품 일괄 생성
+  async function createProduct(opts: {
+    id: string;
+    categoryId: string;
+    brand: Brand;
+    modelName: string;
+    series: string;
+    releaseDate: string;
+    storage: string;
+    color: string;
+    msrp: number;
+    grade: ProductGrade;
+    sellingPrice: number;
+    batteryHealth: number | null;
+    description: string;
+    images: string[];
+  }) {
+    const model = await prisma.deviceModel.upsert({
+      where: { brand_name: { brand: opts.brand, name: opts.modelName } },
+      update: {},
+      create: {
+        categoryId: opts.categoryId,
+        brand: opts.brand,
+        name: opts.modelName,
+        series: opts.series,
+        releaseDate: new Date(opts.releaseDate),
+      },
+    });
+
+    const variant = await prisma.modelVariant.upsert({
+      where: { modelId_storage_color: { modelId: model.id, storage: opts.storage, color: opts.color } },
+      update: {},
+      create: { modelId: model.id, storage: opts.storage, color: opts.color, originalMsrp: opts.msrp },
+    });
+
+    await prisma.product.upsert({
+      where: { id: opts.id },
+      update: { images: opts.images },
+      create: {
+        id: opts.id,
+        tenantId: DEFAULT_TENANT_ID,
+        categoryId: opts.categoryId,
+        modelId: model.id,
+        variantId: variant.id,
+        grade: opts.grade,
+        sellingPrice: opts.sellingPrice,
+        batteryHealth: opts.batteryHealth,
+        description: opts.description,
+        images: opts.images,
+        rating: parseFloat((4.3 + Math.random() * 0.7).toFixed(1)),
+      },
+    });
+  }
+
+  // ----- 스마트폰 추가 7개 (기존 3개 + 7개 = 10개) -----
+  console.log('  📱 스마트폰 추가...');
+
+  await createProduct({
+    id: 'seed-phone-04',
+    categoryId: smartphoneCategory.id,
+    brand: Brand.APPLE, modelName: '아이폰 15 Pro Max', series: '15 시리즈', releaseDate: '2023-09-22',
+    storage: '256GB', color: '내추럴 티타늄', msrp: 1900000,
+    grade: ProductGrade.S_PLUS, sellingPrice: 1500000, batteryHealth: 100,
+    description: '미개봉급 최상 상태. 풀박스 구성품 완비, 액정/외관 기스 전무.',
+    images: [PHONE_IMAGES[4], PHONE_IMAGES[0]],
+  });
+
+  await createProduct({
+    id: 'seed-phone-05',
+    categoryId: smartphoneCategory.id,
+    brand: Brand.APPLE, modelName: '아이폰 15', series: '15 시리즈', releaseDate: '2023-09-22',
+    storage: '256GB', color: '블루', msrp: 1350000,
+    grade: ProductGrade.A, sellingPrice: 850000, batteryHealth: 93,
+    description: '전체적으로 깨끗한 상태. 액정 미세 스크래치 1~2개, 측면 양호.',
+    images: [PHONE_IMAGES[5]],
+  });
+
+  await createProduct({
+    id: 'seed-phone-06',
+    categoryId: smartphoneCategory.id,
+    brand: Brand.APPLE, modelName: '아이폰 14', series: '14 시리즈', releaseDate: '2022-09-16',
+    storage: '128GB', color: '미드나이트', msrp: 1250000,
+    grade: ProductGrade.B_PLUS, sellingPrice: 550000, batteryHealth: 88,
+    description: '사용감 있으나 정상 작동. 액정 미세 기스, 측면 약간의 사용흔적.',
+    images: [PHONE_IMAGES[0], PHONE_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-phone-07',
+    categoryId: smartphoneCategory.id,
+    brand: Brand.APPLE, modelName: '아이폰 13', series: '13 시리즈', releaseDate: '2021-09-24',
+    storage: '128GB', color: '스타라이트', msrp: 1090000,
+    grade: ProductGrade.B, sellingPrice: 430000, batteryHealth: 85,
+    description: '사용감 보통. 액정 경미한 기스, 후면 미세 스크래치. 기능 이상 없음.',
+    images: [PHONE_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-phone-08',
+    categoryId: smartphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 S24+', series: 'S24 시리즈', releaseDate: '2024-01-31',
+    storage: '256GB', color: '앰버 옐로우', msrp: 1353000,
+    grade: ProductGrade.A, sellingPrice: 780000, batteryHealth: 96,
+    description: '상태 양호. AI 기능 탑재, 액정/외관 깨끗함. 정품 충전기 포함.',
+    images: [PHONE_IMAGES[3], PHONE_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-phone-09',
+    categoryId: smartphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Z 플립5', series: 'Z 플립 시리즈', releaseDate: '2023-08-11',
+    storage: '256GB', color: '민트', msrp: 1399200,
+    grade: ProductGrade.S, sellingPrice: 800000, batteryHealth: 97,
+    description: '거의 새것 같은 상태. 폴딩 화면 주름 최소, 외관 기스 없음.',
+    images: [PHONE_IMAGES[5]],
+  });
+
+  await createProduct({
+    id: 'seed-phone-10',
+    categoryId: smartphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 S23 Ultra', series: 'S23 시리즈', releaseDate: '2023-02-17',
+    storage: '256GB', color: '팬텀 블랙', msrp: 1599400,
+    grade: ProductGrade.B_PLUS, sellingPrice: 700000, batteryHealth: 90,
+    description: '사용감 있으나 기능 완벽. S펜 포함, 액정 보호필름 부착 상태.',
+    images: [PHONE_IMAGES[0]],
+  });
+
+  // ----- 태블릿 10개 -----
+  console.log('  📱 태블릿 추가...');
+
+  await createProduct({
+    id: 'seed-tablet-01',
+    categoryId: tabletCategory.id,
+    brand: Brand.APPLE, modelName: '아이패드 Pro 12.9 M2', series: 'Pro 시리즈', releaseDate: '2022-10-26',
+    storage: '256GB', color: '스페이스 그레이', msrp: 1729000,
+    grade: ProductGrade.S, sellingPrice: 1100000, batteryHealth: 96,
+    description: 'M2 칩 탑재 최고 성능. 액정 기스 없음, 외관 매우 깨끗.',
+    images: [TABLET_IMAGES[0], TABLET_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-02',
+    categoryId: tabletCategory.id,
+    brand: Brand.APPLE, modelName: '아이패드 Air 5', series: 'Air 시리즈', releaseDate: '2022-03-18',
+    storage: '64GB', color: '블루', msrp: 929000,
+    grade: ProductGrade.A, sellingPrice: 520000, batteryHealth: 92,
+    description: 'M1 칩 탑재. 전체적으로 깨끗, 측면 미세 사용흔적.',
+    images: [TABLET_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-03',
+    categoryId: tabletCategory.id,
+    brand: Brand.APPLE, modelName: '아이패드 10세대', series: '기본 시리즈', releaseDate: '2022-10-26',
+    storage: '64GB', color: '실버', msrp: 679000,
+    grade: ProductGrade.S, sellingPrice: 380000, batteryHealth: 94,
+    description: 'USB-C 탑재 모델. 깨끗한 상태, 학생용으로 추천.',
+    images: [TABLET_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-04',
+    categoryId: tabletCategory.id,
+    brand: Brand.APPLE, modelName: '아이패드 mini 6', series: 'mini 시리즈', releaseDate: '2021-09-24',
+    storage: '64GB', color: '스타라이트', msrp: 649000,
+    grade: ProductGrade.A, sellingPrice: 400000, batteryHealth: 90,
+    description: '컴팩트 사이즈, 휴대성 최고. 액정 양호, 소형 기스 1~2개.',
+    images: [TABLET_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-05',
+    categoryId: tabletCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Tab S9 Ultra', series: 'Tab S9 시리즈', releaseDate: '2023-08-11',
+    storage: '256GB', color: '그래파이트', msrp: 1599000,
+    grade: ProductGrade.S_PLUS, sellingPrice: 950000, batteryHealth: 98,
+    description: '14.6인치 대화면. 미개봉급 최상 상태, S펜 포함.',
+    images: [TABLET_IMAGES[0], TABLET_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-06',
+    categoryId: tabletCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Tab S9+', series: 'Tab S9 시리즈', releaseDate: '2023-08-11',
+    storage: '256GB', color: '그래파이트', msrp: 1299000,
+    grade: ProductGrade.A, sellingPrice: 650000, batteryHealth: 93,
+    description: '12.4인치 AMOLED. 전체적으로 깨끗한 상태.',
+    images: [TABLET_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-07',
+    categoryId: tabletCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Tab S9', series: 'Tab S9 시리즈', releaseDate: '2023-08-11',
+    storage: '128GB', color: '그래파이트', msrp: 999000,
+    grade: ProductGrade.B_PLUS, sellingPrice: 480000, batteryHealth: 91,
+    description: '11인치 기본형. 사용감 약간 있으나 기능 정상, S펜 포함.',
+    images: [TABLET_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-08',
+    categoryId: tabletCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Tab S8', series: 'Tab S8 시리즈', releaseDate: '2022-02-25',
+    storage: '128GB', color: '실버', msrp: 899000,
+    grade: ProductGrade.B, sellingPrice: 350000, batteryHealth: 87,
+    description: '전세대 모델. 사용감 있으나 기본 성능 충분.',
+    images: [TABLET_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-09',
+    categoryId: tabletCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Tab A9', series: 'Tab A 시리즈', releaseDate: '2023-11-01',
+    storage: '64GB', color: '그래파이트', msrp: 299000,
+    grade: ProductGrade.NEW, sellingPrice: 200000, batteryHealth: 100,
+    description: '미개봉 새상품. 가성비 태블릿, 기본 용도에 적합.',
+    images: [TABLET_IMAGES[0]],
+  });
+
+  await createProduct({
+    id: 'seed-tablet-10',
+    categoryId: tabletCategory.id,
+    brand: Brand.LENOVO, modelName: '레노버 Tab P11 Pro', series: 'Tab P 시리즈', releaseDate: '2022-01-10',
+    storage: '128GB', color: '슬레이트 그레이', msrp: 499000,
+    grade: ProductGrade.A, sellingPrice: 280000, batteryHealth: 89,
+    description: 'OLED 디스플레이. 영상 감상용으로 추천, 상태 양호.',
+    images: [TABLET_IMAGES[1]],
+  });
+
+  // ----- 스마트워치 10개 -----
+  console.log('  ⌚ 스마트워치 추가...');
+
+  await createProduct({
+    id: 'seed-watch-01',
+    categoryId: watchCategory.id,
+    brand: Brand.APPLE, modelName: '애플워치 Ultra 2', series: 'Ultra 시리즈', releaseDate: '2023-09-22',
+    storage: '64GB', color: '티타늄', msrp: 1149000,
+    grade: ProductGrade.S_PLUS, sellingPrice: 750000, batteryHealth: 99,
+    description: '49mm 티타늄 케이스. 미개봉급, 스포츠 밴드 포함.',
+    images: [WATCH_IMAGES[0], WATCH_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-02',
+    categoryId: watchCategory.id,
+    brand: Brand.APPLE, modelName: '애플워치 Series 9', series: 'Series 9', releaseDate: '2023-09-22',
+    storage: '64GB', color: '미드나이트', msrp: 599000,
+    grade: ProductGrade.S, sellingPrice: 380000, batteryHealth: 97,
+    description: '45mm 알루미늄 케이스. 거의 새것, 더블탭 기능 지원.',
+    images: [WATCH_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-03',
+    categoryId: watchCategory.id,
+    brand: Brand.APPLE, modelName: '애플워치 SE 2', series: 'SE 시리즈', releaseDate: '2022-09-16',
+    storage: '32GB', color: '스타라이트', msrp: 359000,
+    grade: ProductGrade.A, sellingPrice: 220000, batteryHealth: 92,
+    description: '44mm 가성비 모델. 상태 양호, 스포츠 밴드 포함.',
+    images: [WATCH_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-04',
+    categoryId: watchCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 워치6 Classic', series: '워치6 시리즈', releaseDate: '2023-08-11',
+    storage: '16GB', color: '실버', msrp: 499000,
+    grade: ProductGrade.S, sellingPrice: 280000, batteryHealth: 95,
+    description: '47mm 회전 베젤. 클래식 디자인, 깨끗한 상태.',
+    images: [WATCH_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-05',
+    categoryId: watchCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 워치6', series: '워치6 시리즈', releaseDate: '2023-08-11',
+    storage: '16GB', color: '그래파이트', msrp: 349000,
+    grade: ProductGrade.A, sellingPrice: 180000, batteryHealth: 93,
+    description: '44mm 경량 모델. 건강 모니터링 기능, 양호한 상태.',
+    images: [WATCH_IMAGES[0]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-06',
+    categoryId: watchCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 워치5 Pro', series: '워치5 시리즈', releaseDate: '2022-08-26',
+    storage: '16GB', color: '블랙 티타늄', msrp: 549000,
+    grade: ProductGrade.B_PLUS, sellingPrice: 200000, batteryHealth: 88,
+    description: '45mm 티타늄 케이스. 아웃도어용, 사용감 약간 있음.',
+    images: [WATCH_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-07',
+    categoryId: watchCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 워치5', series: '워치5 시리즈', releaseDate: '2022-08-26',
+    storage: '16GB', color: '실버', msrp: 349000,
+    grade: ProductGrade.B, sellingPrice: 130000, batteryHealth: 85,
+    description: '44mm 기본형. 사용감 보통이나 기능 정상 작동.',
+    images: [WATCH_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-08',
+    categoryId: watchCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 워치4 Classic', series: '워치4 시리즈', releaseDate: '2021-08-27',
+    storage: '16GB', color: '블랙', msrp: 429000,
+    grade: ProductGrade.B, sellingPrice: 120000, batteryHealth: 82,
+    description: '46mm 회전 베젤. 전세대 모델, 기본 기능 충실.',
+    images: [WATCH_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-09',
+    categoryId: watchCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 워치4', series: '워치4 시리즈', releaseDate: '2021-08-27',
+    storage: '16GB', color: '그린', msrp: 299000,
+    grade: ProductGrade.B_PLUS, sellingPrice: 100000, batteryHealth: 86,
+    description: '44mm 경량. 체성분 측정 가능, 미세 사용흔적.',
+    images: [WATCH_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-watch-10',
+    categoryId: watchCategory.id,
+    brand: Brand.APPLE, modelName: '애플워치 Series 8', series: 'Series 8', releaseDate: '2022-09-16',
+    storage: '32GB', color: '미드나이트', msrp: 599000,
+    grade: ProductGrade.A, sellingPrice: 300000, batteryHealth: 91,
+    description: '45mm 알루미늄. 충돌 감지 기능, 상태 양호.',
+    images: [WATCH_IMAGES[0], WATCH_IMAGES[2]],
+  });
+
+  // ----- 노트북 10개 -----
+  console.log('  💻 노트북 추가...');
+
+  await createProduct({
+    id: 'seed-laptop-01',
+    categoryId: laptopCategory.id,
+    brand: Brand.APPLE, modelName: 'MacBook Pro 16인치 M3 Pro', series: 'MacBook Pro', releaseDate: '2023-11-07',
+    storage: '512GB', color: '스페이스 블랙', msrp: 3490000,
+    grade: ProductGrade.S_PLUS, sellingPrice: 2800000, batteryHealth: null,
+    description: 'M3 Pro 칩, 18GB RAM. 미개봉급 상태, 충전 사이클 15회 미만.',
+    images: [LAPTOP_IMAGES[0], LAPTOP_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-02',
+    categoryId: laptopCategory.id,
+    brand: Brand.APPLE, modelName: 'MacBook Pro 14인치 M3', series: 'MacBook Pro', releaseDate: '2023-11-07',
+    storage: '512GB', color: '스페이스 그레이', msrp: 2390000,
+    grade: ProductGrade.S, sellingPrice: 2100000, batteryHealth: null,
+    description: 'M3 칩, 8GB RAM. 거의 새것, 충전 사이클 30회 미만.',
+    images: [LAPTOP_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-03',
+    categoryId: laptopCategory.id,
+    brand: Brand.APPLE, modelName: 'MacBook Air 15인치 M2', series: 'MacBook Air', releaseDate: '2023-06-13',
+    storage: '256GB', color: '스타라이트', msrp: 1890000,
+    grade: ProductGrade.A, sellingPrice: 1350000, batteryHealth: null,
+    description: '15인치 대화면. 상태 양호, 키보드 마모 없음.',
+    images: [LAPTOP_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-04',
+    categoryId: laptopCategory.id,
+    brand: Brand.APPLE, modelName: 'MacBook Air 13인치 M2', series: 'MacBook Air', releaseDate: '2022-07-15',
+    storage: '256GB', color: '미드나이트', msrp: 1590000,
+    grade: ProductGrade.A, sellingPrice: 1050000, batteryHealth: null,
+    description: 'M2 칩 탑재. 깨끗한 상태, 가벼운 일상용으로 추천.',
+    images: [LAPTOP_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-05',
+    categoryId: laptopCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Book3 Pro 360', series: 'Book3 시리즈', releaseDate: '2023-02-17',
+    storage: '512GB', color: '그래파이트', msrp: 1999000,
+    grade: ProductGrade.S, sellingPrice: 1200000, batteryHealth: null,
+    description: '360도 회전 AMOLED. S펜 지원, 깨끗한 상태.',
+    images: [LAPTOP_IMAGES[0]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-06',
+    categoryId: laptopCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 Book3 Ultra', series: 'Book3 시리즈', releaseDate: '2023-02-17',
+    storage: '512GB', color: '그래파이트', msrp: 2990000,
+    grade: ProductGrade.B_PLUS, sellingPrice: 1400000, batteryHealth: null,
+    description: 'i9 + RTX4070. 사용감 약간 있으나 고성능 유지.',
+    images: [LAPTOP_IMAGES[1], LAPTOP_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-07',
+    categoryId: laptopCategory.id,
+    brand: Brand.LG, modelName: 'LG gram 17', series: 'gram 시리즈', releaseDate: '2023-02-01',
+    storage: '512GB', color: '차콜 그레이', msrp: 1990000,
+    grade: ProductGrade.A, sellingPrice: 1100000, batteryHealth: null,
+    description: '17인치 초경량 1.35kg. 상태 양호, 배터리 성능 우수.',
+    images: [LAPTOP_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-08',
+    categoryId: laptopCategory.id,
+    brand: Brand.LG, modelName: 'LG gram 16', series: 'gram 시리즈', releaseDate: '2023-02-01',
+    storage: '256GB', color: '화이트', msrp: 1590000,
+    grade: ProductGrade.B_PLUS, sellingPrice: 800000, batteryHealth: null,
+    description: '16인치 경량 노트북. 키보드 약간 마모, 액정 깨끗.',
+    images: [LAPTOP_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-09',
+    categoryId: laptopCategory.id,
+    brand: Brand.LENOVO, modelName: 'ThinkPad X1 Carbon Gen 11', series: 'ThinkPad 시리즈', releaseDate: '2023-03-01',
+    storage: '256GB', color: '블랙', msrp: 1990000,
+    grade: ProductGrade.B, sellingPrice: 700000, batteryHealth: null,
+    description: '비즈니스 노트북. 사용감 있으나 내구성 우수, 키보드 양호.',
+    images: [LAPTOP_IMAGES[0]],
+  });
+
+  await createProduct({
+    id: 'seed-laptop-10',
+    categoryId: laptopCategory.id,
+    brand: Brand.LENOVO, modelName: 'IdeaPad Slim 5', series: 'IdeaPad 시리즈', releaseDate: '2023-06-01',
+    storage: '256GB', color: '클라우드 그레이', msrp: 899000,
+    grade: ProductGrade.UNOPENED, sellingPrice: 650000, batteryHealth: null,
+    description: '미개봉 새상품. 가성비 노트북, 일상 업무용 추천.',
+    images: [LAPTOP_IMAGES[1]],
+  });
+
+  // ----- 무선이어폰 10개 -----
+  console.log('  🎧 무선이어폰 추가...');
+
+  await createProduct({
+    id: 'seed-earphone-01',
+    categoryId: earphoneCategory.id,
+    brand: Brand.APPLE, modelName: '에어팟 Pro 2', series: 'AirPods 시리즈', releaseDate: '2022-09-23',
+    storage: '기본', color: '화이트', msrp: 359000,
+    grade: ProductGrade.S_PLUS, sellingPrice: 250000, batteryHealth: null,
+    description: '노이즈 캔슬링 최강. 미개봉급 상태, 이어팁 미사용.',
+    images: [EARPHONE_IMAGES[0], EARPHONE_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-02',
+    categoryId: earphoneCategory.id,
+    brand: Brand.APPLE, modelName: '에어팟 3세대', series: 'AirPods 시리즈', releaseDate: '2021-10-26',
+    storage: '기본', color: '화이트', msrp: 259000,
+    grade: ProductGrade.A, sellingPrice: 130000, batteryHealth: null,
+    description: '공간 음향 지원. 상태 양호, 충전 케이스 포함.',
+    images: [EARPHONE_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-03',
+    categoryId: earphoneCategory.id,
+    brand: Brand.APPLE, modelName: '에어팟 Max', series: 'AirPods 시리즈', releaseDate: '2020-12-15',
+    storage: '기본', color: '스페이스 그레이', msrp: 769000,
+    grade: ProductGrade.S, sellingPrice: 450000, batteryHealth: null,
+    description: '프리미엄 오버이어. 거의 새것, 스마트 케이스 포함.',
+    images: [EARPHONE_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-04',
+    categoryId: earphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 버즈2 Pro', series: '갤럭시 버즈 시리즈', releaseDate: '2022-08-26',
+    storage: '기본', color: '그래파이트', msrp: 279000,
+    grade: ProductGrade.A, sellingPrice: 100000, batteryHealth: null,
+    description: '하이레졸루션 음질. 노이즈 캔슬링, 상태 양호.',
+    images: [EARPHONE_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-05',
+    categoryId: earphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 버즈 FE', series: '갤럭시 버즈 시리즈', releaseDate: '2023-10-05',
+    storage: '기본', color: '그래파이트', msrp: 129000,
+    grade: ProductGrade.S, sellingPrice: 50000, batteryHealth: null,
+    description: '가성비 노캔 이어폰. 깨끗한 상태, 이어팁 여분 포함.',
+    images: [EARPHONE_IMAGES[0]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-06',
+    categoryId: earphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 버즈2', series: '갤럭시 버즈 시리즈', releaseDate: '2022-02-25',
+    storage: '기본', color: '올리브', msrp: 179000,
+    grade: ProductGrade.B_PLUS, sellingPrice: 45000, batteryHealth: null,
+    description: '경량 5g. 노이즈 캔슬링, 사용감 약간.',
+    images: [EARPHONE_IMAGES[1]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-07',
+    categoryId: earphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 버즈 Pro', series: '갤럭시 버즈 시리즈', releaseDate: '2021-01-29',
+    storage: '기본', color: '팬텀 블랙', msrp: 249000,
+    grade: ProductGrade.B, sellingPrice: 40000, batteryHealth: null,
+    description: '프로급 음질. 사용감 보통, 기능 정상 작동.',
+    images: [EARPHONE_IMAGES[2]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-08',
+    categoryId: earphoneCategory.id,
+    brand: Brand.SAMSUNG, modelName: '갤럭시 버즈 Live', series: '갤럭시 버즈 시리즈', releaseDate: '2020-08-06',
+    storage: '기본', color: '미스틱 브론즈', msrp: 199000,
+    grade: ProductGrade.B, sellingPrice: 30000, batteryHealth: null,
+    description: '콩나물 디자인. 오픈형 착용감, 사용감 있음.',
+    images: [EARPHONE_IMAGES[3]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-09',
+    categoryId: earphoneCategory.id,
+    brand: Brand.LG, modelName: 'LG 톤프리 T90', series: 'TONE Free 시리즈', releaseDate: '2023-04-01',
+    storage: '기본', color: '블랙', msrp: 279000,
+    grade: ProductGrade.A, sellingPrice: 100000, batteryHealth: null,
+    description: 'Dolby Atmos 지원. 자외선 살균 케이스, 상태 양호.',
+    images: [EARPHONE_IMAGES[4]],
+  });
+
+  await createProduct({
+    id: 'seed-earphone-10',
+    categoryId: earphoneCategory.id,
+    brand: Brand.APPLE, modelName: '에어팟 2세대', series: 'AirPods 시리즈', releaseDate: '2019-03-20',
+    storage: '기본', color: '화이트', msrp: 199000,
+    grade: ProductGrade.B, sellingPrice: 60000, batteryHealth: null,
+    description: '기본 에어팟. 사용감 있으나 작동 정상, 충전 케이스 포함.',
+    images: [EARPHONE_IMAGES[0]],
   });
 
   // 6. 관리자 계정 생성
@@ -593,7 +1179,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Seeding completed!');
+  console.log('✅ Seeding completed! (50 products across 5 categories)');
 }
 
 main()
