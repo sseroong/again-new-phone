@@ -14,6 +14,10 @@ useHead({ title: '상품 수정' });
 
 const { data: product, pending } = useAdminApi<any>(`/admin/products/${id}`);
 
+// 카테고리/모델 목록 로드
+const { data: categories } = useAdminApi<any[]>('/products/categories');
+const { data: allModels } = useAdminApi<any[]>('/products/models');
+
 const form = reactive({
   grade: '',
   status: '',
@@ -22,12 +26,33 @@ const form = reactive({
   description: '',
   images: [] as string[],
   discountRate: 0,
+  categoryId: '',
+  modelId: '',
+  variantId: '',
+  imei: '',
+  serialNumber: '',
+  warrantyExpiry: '',
+  manufactureDate: '',
 });
 
 const isSubmitting = ref(false);
 const isDeleting = ref(false);
 const isUploading = ref(false);
 const fileInput = ref<HTMLInputElement | null>(null);
+
+const filteredModels = computed(() => {
+  const models = allModels.value || [];
+  if (!form.categoryId) return models;
+  return models.filter((m: any) => m.categoryId === form.categoryId);
+});
+
+const selectedModel = computed(() => {
+  return (allModels.value || []).find((m: any) => m.id === form.modelId);
+});
+
+const variants = computed(() => {
+  return selectedModel.value?.variants || [];
+});
 
 function productName(p: any) {
   const model = p?.model?.name || '';
@@ -46,9 +71,30 @@ watch(product, (val) => {
       description: val.description || '',
       images: val.images || [],
       discountRate: val.discountRate || 0,
+      categoryId: val.categoryId || val.category?.id || '',
+      modelId: val.modelId || val.model?.id || '',
+      variantId: val.variantId || val.variant?.id || '',
+      imei: val.imei || '',
+      serialNumber: val.serialNumber || '',
+      warrantyExpiry: val.warrantyExpiry ? val.warrantyExpiry.split('T')[0] : '',
+      manufactureDate: val.manufactureDate ? val.manufactureDate.split('T')[0] : '',
     });
   }
 }, { immediate: true });
+
+// 카테고리 변경 시 모델/바리언트 초기화
+watch(() => form.categoryId, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) {
+    form.modelId = '';
+    form.variantId = '';
+  }
+});
+
+watch(() => form.modelId, (newVal, oldVal) => {
+  if (oldVal && newVal !== oldVal) {
+    form.variantId = '';
+  }
+});
 
 const gradeOptions = [
   { label: '새상품(NEW)', value: 'NEW' },
@@ -154,6 +200,13 @@ async function handleUpdate() {
         description: form.description,
         images: form.images,
         discountRate: form.discountRate || undefined,
+        categoryId: form.categoryId || undefined,
+        modelId: form.modelId || undefined,
+        variantId: form.variantId || undefined,
+        imei: form.imei || undefined,
+        serialNumber: form.serialNumber || undefined,
+        warrantyExpiry: form.warrantyExpiry || undefined,
+        manufactureDate: form.manufactureDate || undefined,
       },
     });
     toast.add({ title: '상품이 수정되었습니다.', color: 'green' });
@@ -201,56 +254,91 @@ async function handleDelete() {
     </div>
 
     <template v-else-if="product">
-      <!-- 상품 기본 정보 (읽기 전용) -->
+      <!-- 상품명 표시 -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 max-w-3xl">
-        <h2 class="text-lg font-semibold mb-4">기기 정보</h2>
-        <dl class="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <dt class="text-gray-500">상품명</dt>
-            <dd class="font-medium">{{ productName(product) }}</dd>
-          </div>
-          <div>
-            <dt class="text-gray-500">카테고리</dt>
-            <dd>{{ product.category?.name || '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-gray-500">브랜드</dt>
-            <dd>{{ product.model?.brand || '-' }}</dd>
-          </div>
-          <div>
-            <dt class="text-gray-500">IMEI</dt>
-            <dd>{{ product.imei || '-' }}</dd>
-          </div>
-        </dl>
+        <h2 class="text-lg font-semibold mb-2">상품명</h2>
+        <p class="text-gray-700 font-medium">{{ productName(product) }}</p>
       </div>
 
       <!-- 수정 가능 항목 -->
       <form @submit.prevent="handleUpdate" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 max-w-3xl">
-        <h2 class="text-lg font-semibold">수정 항목</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <UFormGroup label="등급">
-            <USelect v-model="form.grade" :options="gradeOptions" value-attribute="value" option-attribute="label" />
-          </UFormGroup>
+        <!-- 기기 정보 -->
+        <div>
+          <h2 class="text-lg font-semibold mb-4">기기 정보</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <UFormGroup label="카테고리">
+              <USelect
+                v-model="form.categoryId"
+                :options="[{ label: '선택하세요', value: '' }, ...(categories || []).map((c: any) => ({ label: c.name, value: c.id }))]"
+                value-attribute="value"
+                option-attribute="label"
+              />
+            </UFormGroup>
 
-          <UFormGroup label="상태">
-            <USelect v-model="form.status" :options="statusOptions" value-attribute="value" option-attribute="label" />
-          </UFormGroup>
+            <UFormGroup label="모델">
+              <USelect
+                v-model="form.modelId"
+                :disabled="!form.categoryId"
+                :options="[{ label: '선택하세요', value: '' }, ...filteredModels.map((m: any) => ({ label: `${m.brand} ${m.name}`, value: m.id }))]"
+                value-attribute="value"
+                option-attribute="label"
+              />
+            </UFormGroup>
 
-          <UFormGroup label="판매가 (원)" required>
-            <UInput v-model.number="form.sellingPrice" type="number" />
-          </UFormGroup>
+            <UFormGroup label="바리언트">
+              <USelect
+                v-model="form.variantId"
+                :disabled="!form.modelId"
+                :options="[{ label: '선택하세요', value: '' }, ...variants.map((v: any) => ({ label: `${v.storage} ${v.color}`, value: v.id }))]"
+                value-attribute="value"
+                option-attribute="label"
+              />
+            </UFormGroup>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <UFormGroup label="IMEI">
+              <UInput v-model="form.imei" placeholder="IMEI 번호" />
+            </UFormGroup>
+            <UFormGroup label="시리얼 번호">
+              <UInput v-model="form.serialNumber" placeholder="시리얼 번호" />
+            </UFormGroup>
+            <UFormGroup label="보증 만료일">
+              <UInput v-model="form.warrantyExpiry" type="date" />
+            </UFormGroup>
+            <UFormGroup label="제조일">
+              <UInput v-model="form.manufactureDate" type="date" />
+            </UFormGroup>
+          </div>
+        </div>
 
-          <UFormGroup label="배터리 건강도 (%)">
-            <UInput v-model.number="form.batteryHealth" type="number" min="0" max="100" />
-          </UFormGroup>
+        <!-- 판매 정보 -->
+        <div>
+          <h2 class="text-lg font-semibold mb-4">판매 정보</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <UFormGroup label="등급">
+              <USelect v-model="form.grade" :options="gradeOptions" value-attribute="value" option-attribute="label" />
+            </UFormGroup>
 
-          <UFormGroup label="할인율 (%)">
-            <UInput v-model.number="form.discountRate" type="number" min="0" max="100" />
-          </UFormGroup>
+            <UFormGroup label="상태">
+              <USelect v-model="form.status" :options="statusOptions" value-attribute="value" option-attribute="label" />
+            </UFormGroup>
 
-          <UFormGroup label="설명" class="md:col-span-2">
-            <UTextarea v-model="form.description" rows="4" />
-          </UFormGroup>
+            <UFormGroup label="판매가 (원)" required>
+              <UInput v-model.number="form.sellingPrice" type="number" />
+            </UFormGroup>
+
+            <UFormGroup label="배터리 건강도 (%)">
+              <UInput v-model.number="form.batteryHealth" type="number" min="0" max="100" />
+            </UFormGroup>
+
+            <UFormGroup label="할인율 (%)">
+              <UInput v-model.number="form.discountRate" type="number" min="0" max="100" />
+            </UFormGroup>
+
+            <UFormGroup label="설명" class="md:col-span-2">
+              <UTextarea v-model="form.description" rows="4" />
+            </UFormGroup>
+          </div>
         </div>
 
         <!-- 이미지 업로드 -->
@@ -259,7 +347,6 @@ async function handleDelete() {
             상품 이미지 (최대 10장)
           </label>
 
-          <!-- 드래그 앤 드롭 영역 -->
           <div
             class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition-colors"
             :class="{ 'opacity-50 pointer-events-none': isUploading || form.images.length >= 10 }"
@@ -288,7 +375,6 @@ async function handleDelete() {
             @change="handleFileSelect"
           />
 
-          <!-- 이미지 미리보기 -->
           <div v-if="form.images.length" class="grid grid-cols-5 gap-3 mt-4">
             <div
               v-for="(img, i) in form.images"

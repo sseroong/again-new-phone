@@ -3,7 +3,10 @@ definePageMeta({ middleware: 'admin-auth' });
 useHead({ title: '배너 관리' });
 
 const toast = useToast();
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBaseUrl as string;
 const apiFetch = useAdminFetch();
+const authStore = useAuthStore();
 
 const page = ref(1);
 const limit = ref(20);
@@ -21,6 +24,8 @@ const { data, pending, refresh } = useAdminApi<any>(queryString);
 const showForm = ref(false);
 const editingId = ref<string | null>(null);
 const isSubmitting = ref(false);
+const isUploading = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const form = reactive({
   title: '',
@@ -49,6 +54,12 @@ const positionLabels: Record<string, string> = {
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('ko-KR');
+}
+
+function getImageUrl(path: string): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${apiBase}${path}`;
 }
 
 function resetForm() {
@@ -85,9 +96,58 @@ function openEdit(banner: any) {
   showForm.value = true;
 }
 
+function triggerFileInput() {
+  fileInput.value?.click();
+}
+
+async function handleFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const files = input.files;
+  if (!files?.length) return;
+
+  await uploadFile(files[0]);
+  input.value = '';
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault();
+  const files = event.dataTransfer?.files;
+  if (!files?.length) return;
+  uploadFile(files[0]);
+}
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault();
+}
+
+async function uploadFile(file: File) {
+  isUploading.value = true;
+  try {
+    const formData = new FormData();
+    formData.append('files', file);
+
+    const data = await $fetch<{ urls: string[] }>(`${apiBase}/api/upload/images`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${authStore.tokens?.accessToken}`,
+      },
+      body: formData,
+    });
+
+    if (data.urls?.length) {
+      form.imageUrl = data.urls[0];
+      toast.add({ title: '이미지 업로드 완료', color: 'green' });
+    }
+  } catch (error: any) {
+    toast.add({ title: error?.data?.message || '이미지 업로드에 실패했습니다.', color: 'red' });
+  } finally {
+    isUploading.value = false;
+  }
+}
+
 async function handleSubmit() {
   if (!form.title.trim() || !form.imageUrl.trim()) {
-    toast.add({ title: '제목과 이미지 URL은 필수입니다.', color: 'red' });
+    toast.add({ title: '제목과 이미지는 필수입니다.', color: 'red' });
     return;
   }
 
@@ -176,8 +236,59 @@ const columns = [
           </UFormGroup>
         </div>
 
-        <UFormGroup label="이미지 URL" required>
-          <UInput v-model="form.imageUrl" placeholder="https://example.com/banner.jpg" />
+        <!-- 이미지 업로드 -->
+        <UFormGroup label="배너 이미지" required>
+          <!-- 업로드된 이미지 미리보기 -->
+          <div v-if="form.imageUrl" class="mb-3">
+            <div class="relative inline-block">
+              <img
+                :src="getImageUrl(form.imageUrl)"
+                alt="배너 이미지"
+                class="max-w-full max-h-48 rounded-lg border border-gray-200 object-cover"
+              />
+              <button
+                type="button"
+                class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+                @click="form.imageUrl = ''"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+
+          <!-- 드래그 앤 드롭 업로드 -->
+          <div
+            v-if="!form.imageUrl"
+            class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-primary-400 hover:bg-primary-50/50 transition-colors"
+            :class="{ 'opacity-50 pointer-events-none': isUploading }"
+            @click="triggerFileInput"
+            @drop="handleDrop"
+            @dragover="handleDragOver"
+          >
+            <UIcon v-if="isUploading" name="i-heroicons-arrow-path" class="w-8 h-8 text-gray-400 mx-auto mb-2 animate-spin" />
+            <UIcon v-else name="i-heroicons-cloud-arrow-up" class="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p class="text-sm text-gray-600">
+              <template v-if="isUploading">업로드 중...</template>
+              <template v-else>
+                클릭하거나 이미지를 드래그하여 업로드
+                <span class="block text-xs text-gray-400 mt-1">JPEG, PNG, WebP, GIF (최대 5MB)</span>
+              </template>
+            </p>
+          </div>
+
+          <!-- 또는 직접 URL 입력 -->
+          <div class="mt-2">
+            <p class="text-xs text-gray-400 mb-1">또는 직접 URL 입력</p>
+            <UInput v-model="form.imageUrl" placeholder="https://example.com/banner.jpg" size="sm" />
+          </div>
+
+          <input
+            ref="fileInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            class="hidden"
+            @change="handleFileSelect"
+          />
         </UFormGroup>
 
         <UFormGroup label="링크 URL">
@@ -213,7 +324,7 @@ const columns = [
       <UTable :columns="columns" :rows="data?.data || []" :loading="pending">
         <template #title-data="{ row }">
           <div class="flex items-center gap-2">
-            <img v-if="row.imageUrl" :src="row.imageUrl" :alt="row.title" class="w-16 h-10 object-cover rounded" />
+            <img v-if="row.imageUrl" :src="getImageUrl(row.imageUrl)" :alt="row.title" class="w-16 h-10 object-cover rounded" />
             <span class="text-sm font-medium">{{ row.title }}</span>
           </div>
         </template>
