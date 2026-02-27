@@ -168,9 +168,6 @@ const isActiveTab = (to: string) => {
             <NuxtLink to="/privacy" class="text-xs text-gray-500 hover:text-gray-700">
               개인정보 처리방침
             </NuxtLink>
-            <NuxtLink to="/blog" class="text-xs text-gray-500 hover:text-gray-700">
-              블로그
-            </NuxtLink>
           </div>
         </div>
 

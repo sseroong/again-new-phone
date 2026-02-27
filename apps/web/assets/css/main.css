@@ -59,6 +59,15 @@
   .grade-badge-C { @apply bg-yellow-100 text-yellow-700; }
   .grade-badge-D { @apply bg-orange-100 text-orange-700; }
   .grade-badge-E { @apply bg-red-100 text-red-700; }
+
+  /* 프로모션 배너 */
+  .promotion-banner {
+    @apply relative w-full bg-gray-100;
+  }
+
+  .promotion-banner-dot {
+    @apply w-2.5 h-2.5 rounded-full transition-colors cursor-pointer;
+  }
 }
 
 /* 유틸리티 */
