@@ -82,6 +82,36 @@ export class ProductsController {
   }
 
   @Public()
+  @Get("stats")
+  @ApiOperation({ summary: "상품 통계 조회" })
+  @ApiResponse({ status: 200, description: "조회 성공" })
+  async getStats(@CurrentTenant() tenantId: string) {
+    return this.productsService.getProductStats(tenantId);
+  }
+
+  @Public()
+  @Get("recommended")
+  @ApiOperation({ summary: "추천 상품 조회" })
+  @ApiQuery({
+    name: "category",
+    required: false,
+    description: "카테고리 타입",
+  })
+  @ApiQuery({ name: "limit", required: false, description: "조회 개수" })
+  @ApiResponse({ status: 200, description: "조회 성공" })
+  async getRecommended(
+    @CurrentTenant() tenantId: string,
+    @Query("category") category?: string,
+    @Query("limit") limit?: number,
+  ) {
+    return this.productsService.getRecommendedProducts(
+      tenantId,
+      category,
+      limit || 8,
+    );
+  }
+
+  @Public()
   @Get(":id")
   @ApiOperation({ summary: "상품 상세 조회" })
   @ApiParam({ name: "id", description: "상품 ID" })

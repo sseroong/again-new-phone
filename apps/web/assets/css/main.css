@@ -47,6 +47,15 @@
   .trust-badge-verified {
     @apply bg-green-100 text-green-700;
   }
+
+  /* 프로모션 배너 */
+  .promotion-banner {
+    @apply relative w-full bg-gray-100;
+  }
+
+  .promotion-banner-dot {
+    @apply w-2.5 h-2.5 rounded-full transition-colors cursor-pointer;
+  }
 }
 
 /* 유틸리티 */
