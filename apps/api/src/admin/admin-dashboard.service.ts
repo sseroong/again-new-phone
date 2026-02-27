@@ -49,7 +49,7 @@ export class AdminDashboardService {
 
       // 최근 주문 5건
       this.prisma.order.findMany({
-        where: { tenantId },
+        where: { tenantId, ...dateFilter },
         take: 5,
         orderBy: { createdAt: "desc" },
         include: {
@@ -66,7 +66,7 @@ export class AdminDashboardService {
 
       // 최근 판매접수 5건
       this.prisma.sellRequest.findMany({
-        where: { tenantId },
+        where: { tenantId, ...dateFilter },
         take: 5,
         orderBy: { createdAt: "desc" },
         include: {

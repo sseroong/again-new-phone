@@ -18,6 +18,7 @@ import {
   AdminSellRequestQueryDto,
   AdminUpdateSellRequestDto,
   AdminCreateQuoteDto,
+  AdminCreateSellRequestDto,
 } from "./dto";
 
 @ApiTags("admin-sell-requests")
@@ -27,6 +28,15 @@ import {
 @ApiBearerAuth()
 export class AdminSellRequestsController {
   constructor(private readonly sellRequestsService: AdminSellRequestsService) {}
+
+  @Post()
+  @ApiOperation({ summary: "판매접수 등록 (관리자)" })
+  create(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: AdminCreateSellRequestDto,
+  ) {
+    return this.sellRequestsService.create(tenantId, dto);
+  }
 
   @Get()
   @ApiOperation({ summary: "전체 판매접수 목록 (관리자)" })

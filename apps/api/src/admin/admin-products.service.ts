@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import {
@@ -119,9 +123,39 @@ export class AdminProductsService {
       throw new NotFoundException("상품을 찾을 수 없습니다.");
     }
 
+    // 관계 필드 변경 시 유효성 검증
+    if (dto.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: dto.categoryId },
+      });
+      if (!category)
+        throw new BadRequestException("유효하지 않은 카테고리입니다.");
+    }
+    if (dto.modelId) {
+      const model = await this.prisma.deviceModel.findUnique({
+        where: { id: dto.modelId },
+      });
+      if (!model) throw new BadRequestException("유효하지 않은 모델입니다.");
+    }
+    if (dto.variantId) {
+      const variant = await this.prisma.modelVariant.findUnique({
+        where: { id: dto.variantId },
+      });
+      if (!variant) throw new BadRequestException("유효하지 않은 옵션입니다.");
+    }
+
+    // 날짜 필드 변환
+    const updateData: any = { ...dto };
+    if (dto.warrantyExpiry) {
+      updateData.warrantyExpiry = new Date(dto.warrantyExpiry);
+    }
+    if (dto.manufactureDate) {
+      updateData.manufactureDate = new Date(dto.manufactureDate);
+    }
+
     return this.prisma.product.update({
       where: { id },
-      data: dto,
+      data: updateData,
       include: {
         category: true,
         model: true,

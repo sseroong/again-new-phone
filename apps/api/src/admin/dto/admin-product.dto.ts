@@ -7,6 +7,7 @@ import {
   IsString,
   IsArray,
   IsNumber,
+  IsDateString,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Type } from "class-transformer";
@@ -160,4 +161,39 @@ export class AdminUpdateProductDto {
   @Type(() => Number)
   @IsNumber()
   discountRate?: number;
+
+  @ApiPropertyOptional({ description: "카테고리 ID" })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @ApiPropertyOptional({ description: "모델 ID" })
+  @IsOptional()
+  @IsString()
+  modelId?: string;
+
+  @ApiPropertyOptional({ description: "옵션(변형) ID" })
+  @IsOptional()
+  @IsString()
+  variantId?: string;
+
+  @ApiPropertyOptional({ description: "IMEI" })
+  @IsOptional()
+  @IsString()
+  imei?: string;
+
+  @ApiPropertyOptional({ description: "시리얼 넘버" })
+  @IsOptional()
+  @IsString()
+  serialNumber?: string;
+
+  @ApiPropertyOptional({ description: "보증 만료일 (ISO 8601)" })
+  @IsOptional()
+  @IsDateString()
+  warrantyExpiry?: string;
+
+  @ApiPropertyOptional({ description: "제조일 (ISO 8601)" })
+  @IsOptional()
+  @IsDateString()
+  manufactureDate?: string;
 }

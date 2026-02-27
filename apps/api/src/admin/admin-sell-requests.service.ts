@@ -9,11 +9,40 @@ import {
   AdminSellRequestQueryDto,
   AdminUpdateSellRequestDto,
   AdminCreateQuoteDto,
+  AdminCreateSellRequestDto,
 } from "./dto";
 
 @Injectable()
 export class AdminSellRequestsService {
   constructor(private prisma: PrismaService) {}
+
+  async create(tenantId: string, dto: AdminCreateSellRequestDto) {
+    // 사용자 존재 검증
+    const user = await this.prisma.user.findUnique({
+      where: { id: dto.userId },
+    });
+    if (!user) throw new NotFoundException("사용자를 찾을 수 없습니다.");
+
+    return this.prisma.sellRequest.create({
+      data: {
+        tenantId,
+        userId: dto.userId,
+        category: dto.category,
+        brand: dto.brand,
+        modelName: dto.modelName,
+        storage: dto.storage,
+        color: dto.color,
+        selfGrade: dto.selfGrade,
+        estimatedPrice: dto.estimatedPrice,
+        tradeMethod: dto.tradeMethod,
+        deviceCondition: dto.deviceCondition || {},
+        inspectionNotes: dto.inspectionNotes,
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+  }
 
   async findAll(tenantId: string, query: AdminSellRequestQueryDto) {
     const { status, search, page = 1, limit = 20 } = query;

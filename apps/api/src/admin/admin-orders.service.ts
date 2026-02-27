@@ -9,6 +9,7 @@ import {
   AdminOrderQueryDto,
   AdminUpdateOrderStatusDto,
   AdminUpdateTrackingDto,
+  AdminShippingQueryDto,
 } from "./dto";
 
 const VALID_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -29,6 +30,108 @@ const VALID_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
 @Injectable()
 export class AdminOrdersService {
   constructor(private prisma: PrismaService) {}
+
+  async findShippingList(tenantId: string, query: AdminShippingQueryDto) {
+    const { status, search, startDate, endDate, page = 1, limit = 20 } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.OrderWhereInput = {
+      tenantId,
+      // 배송 관련 상태만 (결제 완료 이후)
+      status: status || {
+        in: [
+          OrderStatus.PAID,
+          OrderStatus.PREPARING,
+          OrderStatus.SHIPPING,
+          OrderStatus.DELIVERED,
+          OrderStatus.COMPLETED,
+        ],
+      },
+    };
+
+    if (search) {
+      where.OR = [
+        { orderNumber: { contains: search, mode: "insensitive" } },
+        { shippingName: { contains: search, mode: "insensitive" } },
+        { trackingNumber: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) (where.createdAt as any).gte = new Date(startDate);
+      if (endDate)
+        (where.createdAt as any).lte = new Date(endDate + "T23:59:59.999Z");
+    }
+
+    const [orders, total] = await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          shippingName: true,
+          shippingPhone: true,
+          shippingZipCode: true,
+          shippingAddress: true,
+          shippingDetail: true,
+          shippingMemo: true,
+          trackingNumber: true,
+          trackingCompany: true,
+          shippedAt: true,
+          deliveredAt: true,
+          createdAt: true,
+          items: {
+            include: {
+              product: { include: { model: true, variant: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+
+    return {
+      data: orders,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async findShippingDetail(id: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        shippingName: true,
+        shippingPhone: true,
+        shippingZipCode: true,
+        shippingAddress: true,
+        shippingDetail: true,
+        shippingMemo: true,
+        trackingNumber: true,
+        trackingCompany: true,
+        shippedAt: true,
+        deliveredAt: true,
+        completedAt: true,
+        createdAt: true,
+        user: { select: { id: true, name: true, email: true, phone: true } },
+        items: {
+          include: {
+            product: { include: { category: true, model: true, variant: true } },
+          },
+        },
+      },
+    });
+
+    if (!order) throw new NotFoundException("주문을 찾을 수 없습니다.");
+    return order;
+  }
 
   async findAll(tenantId: string, query: AdminOrderQueryDto) {
     const { status, userId, search, page = 1, limit = 20 } = query;

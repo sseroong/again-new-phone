@@ -75,6 +75,258 @@ describe("AdminOrdersService", () => {
     expect(service).toBeDefined();
   });
 
+  // ---------------------------------------------------------------------------
+  // findShippingList
+  // ---------------------------------------------------------------------------
+  describe("findShippingList", () => {
+    const mockShippingOrder = {
+      id: "order-1",
+      orderNumber: "ORD-20240101-0001",
+      status: OrderStatus.SHIPPING,
+      shippingName: "홍길동",
+      shippingPhone: "010-1234-5678",
+      shippingZipCode: "06000",
+      shippingAddress: "서울시 강남구",
+      shippingDetail: "101동 1001호",
+      shippingMemo: "부재시 경비실",
+      trackingNumber: "1234567890",
+      trackingCompany: "CJ대한통운",
+      shippedAt: new Date("2024-01-02"),
+      deliveredAt: null,
+      createdAt: new Date("2024-01-01"),
+      items: [
+        {
+          id: "item-1",
+          product: {
+            id: "product-1",
+            model: { id: "model-1", name: "iPhone 15 Pro" },
+            variant: { id: "variant-1", storage: "256GB" },
+          },
+        },
+      ],
+    };
+
+    it("배송 관련 상태의 주문 목록을 반환한다", async () => {
+      prisma.order.findMany.mockResolvedValue([mockShippingOrder]);
+      prisma.order.count.mockResolvedValue(1);
+
+      const result = await service.findShippingList(tenantId, {});
+
+      expect(result.data).toHaveLength(1);
+      expect(result.meta).toEqual({
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            tenantId,
+            status: {
+              in: [
+                OrderStatus.PAID,
+                OrderStatus.PREPARING,
+                OrderStatus.SHIPPING,
+                OrderStatus.DELIVERED,
+                OrderStatus.COMPLETED,
+              ],
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          skip: 0,
+          take: 20,
+        }),
+      );
+    });
+
+    it("특정 상태 필터를 적용한다", async () => {
+      prisma.order.findMany.mockResolvedValue([]);
+      prisma.order.count.mockResolvedValue(0);
+
+      await service.findShippingList(tenantId, {
+        status: OrderStatus.SHIPPING,
+      });
+
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            tenantId,
+            status: OrderStatus.SHIPPING,
+          },
+        }),
+      );
+    });
+
+    it("검색어 필터를 적용한다 (주문번호, 수취인, 송장번호)", async () => {
+      prisma.order.findMany.mockResolvedValue([]);
+      prisma.order.count.mockResolvedValue(0);
+
+      await service.findShippingList(tenantId, { search: "홍길동" });
+
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { orderNumber: { contains: "홍길동", mode: "insensitive" } },
+              { shippingName: { contains: "홍길동", mode: "insensitive" } },
+              { trackingNumber: { contains: "홍길동", mode: "insensitive" } },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it("날짜 범위 필터를 적용한다", async () => {
+      prisma.order.findMany.mockResolvedValue([]);
+      prisma.order.count.mockResolvedValue(0);
+
+      await service.findShippingList(tenantId, {
+        startDate: "2024-01-01",
+        endDate: "2024-01-31",
+      });
+
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            createdAt: {
+              gte: new Date("2024-01-01"),
+              lte: new Date("2024-01-31T23:59:59.999Z"),
+            },
+          }),
+        }),
+      );
+    });
+
+    it("페이지네이션을 적용한다", async () => {
+      prisma.order.findMany.mockResolvedValue([]);
+      prisma.order.count.mockResolvedValue(50);
+
+      const result = await service.findShippingList(tenantId, {
+        page: 3,
+        limit: 10,
+      });
+
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 20,
+          take: 10,
+        }),
+      );
+      expect(result.meta).toEqual({
+        total: 50,
+        page: 3,
+        limit: 10,
+        totalPages: 5,
+      });
+    });
+
+    it("select에 배송 정보 필드가 포함된다", async () => {
+      prisma.order.findMany.mockResolvedValue([mockShippingOrder]);
+      prisma.order.count.mockResolvedValue(1);
+
+      await service.findShippingList(tenantId, {});
+
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          select: expect.objectContaining({
+            shippingName: true,
+            shippingPhone: true,
+            shippingZipCode: true,
+            shippingAddress: true,
+            shippingDetail: true,
+            shippingMemo: true,
+            trackingNumber: true,
+            trackingCompany: true,
+            shippedAt: true,
+            deliveredAt: true,
+          }),
+        }),
+      );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // findShippingDetail
+  // ---------------------------------------------------------------------------
+  describe("findShippingDetail", () => {
+    const mockShippingDetail = {
+      id: "order-1",
+      orderNumber: "ORD-20240101-0001",
+      status: OrderStatus.SHIPPING,
+      shippingName: "홍길동",
+      shippingPhone: "010-1234-5678",
+      shippingZipCode: "06000",
+      shippingAddress: "서울시 강남구",
+      shippingDetail: "101동 1001호",
+      shippingMemo: "부재시 경비실",
+      trackingNumber: "1234567890",
+      trackingCompany: "CJ대한통운",
+      shippedAt: new Date("2024-01-02"),
+      deliveredAt: null,
+      completedAt: null,
+      createdAt: new Date("2024-01-01"),
+      user: {
+        id: "user-1",
+        name: "홍길동",
+        email: "hong@example.com",
+        phone: "010-1234-5678",
+      },
+      items: [
+        {
+          id: "item-1",
+          product: {
+            id: "product-1",
+            category: { id: "cat-1", name: "스마트폰" },
+            model: { id: "model-1", name: "iPhone 15 Pro" },
+            variant: { id: "variant-1", storage: "256GB" },
+          },
+        },
+      ],
+    };
+
+    it("배송 상세 정보를 반환한다", async () => {
+      prisma.order.findUnique.mockResolvedValue(mockShippingDetail);
+
+      const result = await service.findShippingDetail("order-1");
+
+      expect(result).toEqual(mockShippingDetail);
+      expect(prisma.order.findUnique).toHaveBeenCalledWith({
+        where: { id: "order-1" },
+        select: expect.objectContaining({
+          shippingName: true,
+          shippingPhone: true,
+          trackingNumber: true,
+          trackingCompany: true,
+          user: { select: { id: true, name: true, email: true, phone: true } },
+          items: expect.any(Object),
+        }),
+      });
+    });
+
+    it("존재하지 않는 주문이면 NotFoundException", async () => {
+      prisma.order.findUnique.mockResolvedValue(null);
+
+      await expect(service.findShippingDetail("nonexistent")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("user와 items 관계를 포함한다", async () => {
+      prisma.order.findUnique.mockResolvedValue(mockShippingDetail);
+
+      const result = await service.findShippingDetail("order-1");
+
+      expect(result.user).toBeDefined();
+      expect(result.user.name).toBe("홍길동");
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].product.model.name).toBe("iPhone 15 Pro");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // findAll
+  // ---------------------------------------------------------------------------
   describe("findAll", () => {
     it("전체 주문 목록을 반환한다", async () => {
       const orders = [mockOrderWithRelations];
