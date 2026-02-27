@@ -28,6 +28,15 @@ function getImageUrl(path: string): string {
   return `${apiBase}${path}`;
 }
 
+// 카테고리별 브랜드 매핑
+const CATEGORY_BRANDS: Record<string, Brand[]> = {
+  SMARTPHONE: ['APPLE', 'SAMSUNG', 'LG', 'OTHER'],
+  TABLET: ['APPLE', 'SAMSUNG', 'LENOVO', 'OTHER'],
+  WATCH: ['APPLE', 'SAMSUNG', 'OTHER'],
+  LAPTOP: ['APPLE', 'SAMSUNG', 'LG', 'LENOVO', 'OTHER'],
+  EARPHONE: ['APPLE', 'SAMSUNG', 'OTHER'],
+};
+
 // 필터 상태 (URL 쿼리에서 초기화)
 const selectedCategory = ref<DeviceCategory | null>(
   (route.query.category as DeviceCategory) || null,
@@ -49,6 +58,15 @@ const priceRange = ref<{ min: number; max: number } | null>(
 const sortBy = ref<'price_asc' | 'price_desc' | 'newest' | 'popular'>(
   (route.query.sortBy as any) || 'newest',
 );
+
+// 카테고리별 동적 브랜드 목록
+const filteredBrands = computed(() => {
+  if (!selectedCategory.value) {
+    return Object.entries(BRANDS) as [Brand, { label: string }][];
+  }
+  const brandKeys = CATEGORY_BRANDS[selectedCategory.value] || Object.keys(BRANDS);
+  return brandKeys.map((key) => [key, BRANDS[key]] as [Brand, { label: string }]);
+});
 
 // 페이지네이션
 const page = ref(route.query.page ? Number(route.query.page) : 1);
@@ -109,9 +127,13 @@ const resetFilters = () => {
   page.value = 1;
 };
 
-// 카테고리 변경 시 페이지 리셋
+// 카테고리 변경 시 페이지 리셋 + 유효하지 않은 브랜드 해제
 watch(selectedCategory, () => {
   page.value = 1;
+  if (selectedCategory.value) {
+    const validBrands = CATEGORY_BRANDS[selectedCategory.value] || [];
+    selectedBrands.value = selectedBrands.value.filter((b) => validBrands.includes(b));
+  }
 });
 
 // 필터 변경 시 URL 쿼리 파라미터 동기화
@@ -185,12 +207,12 @@ watch(queryParams, () => {
               </button>
             </div>
 
-            <!-- 제조사 필터 -->
+            <!-- 제조사 필터 (카테고리별 동적) -->
             <div>
               <h4 class="text-sm font-medium mb-2">제조사</h4>
               <div class="space-y-2">
                 <label
-                  v-for="(brand, key) in BRANDS"
+                  v-for="[key, brand] in filteredBrands"
                   :key="key"
                   class="flex items-center gap-2 cursor-pointer"
                 >
@@ -220,7 +242,7 @@ watch(queryParams, () => {
                     :value="key"
                     class="rounded text-primary-600 focus:ring-primary-500"
                   />
-                  <span class="text-sm text-gray-600">{{ grade.label }}</span>
+                  <ProductGradeBadge :grade="key" />
                 </label>
               </div>
             </div>
@@ -325,12 +347,10 @@ watch(queryParams, () => {
               <!-- 상품 정보 -->
               <div class="p-3 space-y-1">
                 <div class="flex items-center gap-1">
-                  <span
+                  <ProductGradeBadge
                     v-if="PRODUCT_GRADES[product.grade as ProductGrade]"
-                    class="grade-badge text-xs px-1.5 py-0.5 rounded"
-                  >
-                    {{ PRODUCT_GRADES[product.grade as ProductGrade].label }}
-                  </span>
+                    :grade="product.grade"
+                  />
                   <span class="text-xs text-gray-500">{{ product.variant?.storage }}</span>
                 </div>
 

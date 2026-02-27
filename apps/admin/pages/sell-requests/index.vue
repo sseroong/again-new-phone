@@ -72,7 +72,10 @@ const columns = [
 
 <template>
   <div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">판매접수 관리</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-gray-900">판매접수 관리</h1>
+      <UButton to="/sell-requests/create" icon="i-heroicons-plus" label="판매접수 등록" />
+    </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
       <div class="flex flex-wrap gap-3">

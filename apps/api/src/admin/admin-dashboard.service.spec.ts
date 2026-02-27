@@ -340,6 +340,95 @@ describe("AdminDashboardService", () => {
       );
     });
 
+    it("날짜 필터 적용 시 recentOrders에도 createdAt 조건이 포함된다", async () => {
+      setupDefaultMocks();
+
+      const query: DashboardQueryDto = {
+        startDate: "2024-06-01",
+        endDate: "2024-06-30",
+      };
+      await service.getStats(tenantId, query);
+
+      const expectedDateFilter = {
+        gte: new Date("2024-06-01"),
+        lte: new Date("2024-06-30T23:59:59.999Z"),
+      };
+
+      expect(prisma.order.findMany).toHaveBeenCalledWith({
+        where: { tenantId, createdAt: expectedDateFilter },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          items: {
+            include: {
+              product: {
+                include: { model: true, variant: true },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it("날짜 필터 적용 시 recentSellRequests에도 createdAt 조건이 포함된다", async () => {
+      setupDefaultMocks();
+
+      const query: DashboardQueryDto = {
+        startDate: "2024-06-01",
+        endDate: "2024-06-30",
+      };
+      await service.getStats(tenantId, query);
+
+      const expectedDateFilter = {
+        gte: new Date("2024-06-01"),
+        lte: new Date("2024-06-30T23:59:59.999Z"),
+      };
+
+      expect(prisma.sellRequest.findMany).toHaveBeenCalledWith({
+        where: { tenantId, createdAt: expectedDateFilter },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      });
+    });
+
+    it("날짜 필터 없을 때 recentOrders/recentSellRequests는 tenantId만으로 조회한다", async () => {
+      setupDefaultMocks();
+
+      const query: DashboardQueryDto = {};
+      await service.getStats(tenantId, query);
+
+      // recentOrders - dateFilter가 빈 객체이므로 spread 결과는 tenantId만
+      expect(prisma.order.findMany).toHaveBeenCalledWith({
+        where: { tenantId },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          items: {
+            include: {
+              product: {
+                include: { model: true, variant: true },
+              },
+            },
+          },
+        },
+      });
+
+      // recentSellRequests
+      expect(prisma.sellRequest.findMany).toHaveBeenCalledWith({
+        where: { tenantId },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      });
+    });
+
     it("6개의 Prisma 호출이 모두 실행된다", async () => {
       setupDefaultMocks();
 

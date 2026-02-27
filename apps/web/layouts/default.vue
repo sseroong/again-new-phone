@@ -10,6 +10,7 @@ const navItems = [
   { label: '나의 거래내역', to: '/my/transactions', icon: 'i-heroicons-document-text' },
   { label: '실거래 리뷰', to: '/reviews', icon: 'i-heroicons-chat-bubble-left-right' },
   { label: '중고폰 시세', to: '/price', icon: 'i-heroicons-chart-bar' },
+  { label: '딱검수 등급', to: '/grade-guide', icon: 'i-heroicons-check-badge' },
   { label: '내 기기 관리', to: '/my/devices', icon: 'i-heroicons-device-phone-mobile' },
 ];
 

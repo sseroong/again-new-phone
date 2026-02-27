@@ -17,6 +17,7 @@ import {
   AdminOrderQueryDto,
   AdminUpdateOrderStatusDto,
   AdminUpdateTrackingDto,
+  AdminShippingQueryDto,
 } from "./dto";
 
 @ApiTags("admin-orders")
@@ -34,6 +35,21 @@ export class AdminOrdersController {
     @Query() query: AdminOrderQueryDto,
   ) {
     return this.ordersService.findAll(tenantId, query);
+  }
+
+  @Get("shipping")
+  @ApiOperation({ summary: "배송 관리 목록" })
+  findShippingList(
+    @CurrentTenant() tenantId: string,
+    @Query() query: AdminShippingQueryDto,
+  ) {
+    return this.ordersService.findShippingList(tenantId, query);
+  }
+
+  @Get(":id/shipping")
+  @ApiOperation({ summary: "배송 상세 정보" })
+  findShippingDetail(@Param("id") id: string) {
+    return this.ordersService.findShippingDetail(id);
   }
 
   @Get(":id")

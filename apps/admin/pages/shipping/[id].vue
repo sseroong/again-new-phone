@@ -6,13 +6,11 @@ const toast = useToast();
 const apiFetch = useAdminFetch();
 const id = route.params.id as string;
 
-const { data: order, pending, refresh } = useAdminApi<any>(`/admin/orders/${id}`);
+const { data: shipping, pending, refresh } = useAdminApi<any>(`/admin/orders/${id}/shipping`);
 
-useHead({ title: computed(() => order.value ? `주문 ${order.value.orderNumber}` : '주문 상세') });
+useHead({ title: computed(() => shipping.value ? `배송 ${shipping.value.orderNumber}` : '배송 상세') });
 
-const statusFlow = ['PAID', 'PREPARING', 'SHIPPING', 'DELIVERED', 'COMPLETED'];
 const statusLabels: Record<string, string> = {
-  PENDING_PAYMENT: '결제 대기',
   PAID: '결제 완료',
   PREPARING: '상품 준비중',
   SHIPPING: '배송중',
@@ -21,8 +19,8 @@ const statusLabels: Record<string, string> = {
   CANCELLED: '취소',
   REFUNDED: '환불',
 };
+
 const statusColors: Record<string, string> = {
-  PENDING_PAYMENT: 'gray',
   PAID: 'blue',
   PREPARING: 'yellow',
   SHIPPING: 'orange',
@@ -36,14 +34,12 @@ const trackingNumber = ref('');
 const trackingCompany = ref('');
 const isUpdating = ref(false);
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('ko-KR').format(price) + '원';
-}
-
 function formatDate(date: string | null) {
   if (!date) return '-';
   return new Date(date).toLocaleString('ko-KR');
 }
+
+const statusFlow = ['PAID', 'PREPARING', 'SHIPPING', 'DELIVERED', 'COMPLETED'];
 
 function nextStatus(currentStatus: string): string | null {
   const idx = statusFlow.indexOf(currentStatus);
@@ -93,86 +89,100 @@ async function submitTracking() {
 <template>
   <div>
     <div class="flex items-center gap-3 mb-6">
-      <UButton to="/orders" variant="ghost" color="gray" icon="i-heroicons-arrow-left" />
-      <h1 class="text-2xl font-bold text-gray-900">주문 상세</h1>
+      <UButton to="/shipping" variant="ghost" color="gray" icon="i-heroicons-arrow-left" />
+      <h1 class="text-2xl font-bold text-gray-900">배송 상세</h1>
     </div>
 
     <div v-if="pending" class="flex justify-center py-12">
       <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
     </div>
 
-    <template v-else-if="order">
+    <template v-else-if="shipping">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- 주문 정보 -->
+        <!-- 메인 정보 -->
         <div class="lg:col-span-2 space-y-6">
+          <!-- 주문 정보 -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div class="flex items-center justify-between mb-4">
               <h2 class="font-semibold text-gray-900">주문 정보</h2>
-              <UBadge :color="statusColors[order.status]" variant="subtle">
-                {{ statusLabels[order.status] }}
+              <UBadge :color="statusColors[shipping.status]" variant="subtle">
+                {{ statusLabels[shipping.status] }}
               </UBadge>
             </div>
             <dl class="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <dt class="text-gray-500">주문번호</dt>
-                <dd class="font-medium">{{ order.orderNumber }}</dd>
+                <dd class="font-medium">{{ shipping.orderNumber }}</dd>
               </div>
               <div>
                 <dt class="text-gray-500">주문자</dt>
-                <dd class="font-medium">{{ order.user?.name }} ({{ order.user?.email }})</dd>
-              </div>
-              <div>
-                <dt class="text-gray-500">총 금액</dt>
-                <dd class="font-bold text-lg">{{ formatPrice(order.totalAmount) }}</dd>
+                <dd class="font-medium">
+                  {{ shipping.user?.name || '-' }}
+                  <span v-if="shipping.user?.email" class="text-gray-400">({{ shipping.user.email }})</span>
+                </dd>
               </div>
               <div>
                 <dt class="text-gray-500">주문일시</dt>
-                <dd>{{ formatDate(order.createdAt) }}</dd>
+                <dd>{{ formatDate(shipping.createdAt) }}</dd>
               </div>
-              <div v-if="order.trackingNumber">
-                <dt class="text-gray-500">송장번호</dt>
-                <dd class="font-medium">{{ order.trackingCompany }} {{ order.trackingNumber }}</dd>
+              <div v-if="shipping.user?.phone">
+                <dt class="text-gray-500">주문자 연락처</dt>
+                <dd>{{ shipping.user.phone }}</dd>
               </div>
             </dl>
           </div>
 
-          <!-- 배송 정보 -->
+          <!-- 배송지 정보 -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="font-semibold text-gray-900">배송 정보</h2>
-              <NuxtLink
-                :to="`/shipping/${id}`"
-                class="text-sm text-primary-600 hover:underline flex items-center gap-1"
-              >
-                <UIcon name="i-heroicons-truck" class="w-4 h-4" />
-                배송 상세
-              </NuxtLink>
-            </div>
+            <h2 class="font-semibold text-gray-900 mb-4">배송지 정보</h2>
             <dl class="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <dt class="text-gray-500">수취인</dt>
-                <dd class="font-medium">{{ order.shippingName || '-' }}</dd>
+                <dd class="font-medium text-lg">{{ shipping.shippingName || '-' }}</dd>
               </div>
               <div>
                 <dt class="text-gray-500">연락처</dt>
-                <dd class="font-medium">{{ order.shippingPhone || '-' }}</dd>
+                <dd class="font-medium text-lg">{{ shipping.shippingPhone || '-' }}</dd>
               </div>
               <div class="col-span-2">
-                <dt class="text-gray-500">배송지</dt>
+                <dt class="text-gray-500">배송 주소</dt>
                 <dd class="font-medium">
-                  <template v-if="order.shippingAddress">
-                    ({{ order.shippingZipCode }}) {{ order.shippingAddress }} {{ order.shippingDetail }}
+                  <template v-if="shipping.shippingAddress">
+                    ({{ shipping.shippingZipCode }}) {{ shipping.shippingAddress }} {{ shipping.shippingDetail }}
                   </template>
                   <template v-else>-</template>
                 </dd>
               </div>
-              <div v-if="order.shippingMemo">
+              <div v-if="shipping.shippingMemo" class="col-span-2">
                 <dt class="text-gray-500">배송 메모</dt>
-                <dd>{{ order.shippingMemo }}</dd>
+                <dd class="bg-gray-50 rounded-lg p-3 text-gray-700">{{ shipping.shippingMemo }}</dd>
               </div>
-              <div v-if="order.trackingNumber">
+            </dl>
+          </div>
+
+          <!-- 송장 정보 -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="font-semibold text-gray-900 mb-4">송장 정보</h2>
+            <dl class="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt class="text-gray-500">택배사</dt>
+                <dd class="font-medium">{{ shipping.trackingCompany || '-' }}</dd>
+              </div>
+              <div>
                 <dt class="text-gray-500">송장번호</dt>
-                <dd class="font-medium">{{ order.trackingCompany }} {{ order.trackingNumber }}</dd>
+                <dd class="font-medium">{{ shipping.trackingNumber || '-' }}</dd>
+              </div>
+              <div>
+                <dt class="text-gray-500">출고일시</dt>
+                <dd>{{ formatDate(shipping.shippedAt) }}</dd>
+              </div>
+              <div>
+                <dt class="text-gray-500">배송 완료일시</dt>
+                <dd>{{ formatDate(shipping.deliveredAt) }}</dd>
+              </div>
+              <div v-if="shipping.completedAt">
+                <dt class="text-gray-500">거래 완료일시</dt>
+                <dd>{{ formatDate(shipping.completedAt) }}</dd>
               </div>
             </dl>
           </div>
@@ -181,31 +191,36 @@ async function submitTracking() {
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 class="font-semibold text-gray-900 mb-4">주문 상품</h2>
             <div class="divide-y divide-gray-100">
-              <div v-for="item in order.items" :key="item.id" class="flex items-center justify-between py-3">
+              <div v-for="item in shipping.items" :key="item.id" class="flex items-center justify-between py-3">
                 <div>
-                  <p class="text-sm font-medium text-gray-900">{{ item.product?.title || '상품' }}</p>
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ item.product?.model?.name || '' }} {{ item.product?.variant?.storage || '' }} {{ item.product?.variant?.color || '' }}
+                  </p>
                   <p class="text-xs text-gray-500">수량: {{ item.quantity }}</p>
                 </div>
-                <p class="text-sm font-medium">{{ formatPrice(item.price) }}</p>
+                <p class="text-sm font-medium">{{ new Intl.NumberFormat('ko-KR').format(item.price) }}원</p>
+              </div>
+              <div v-if="!shipping.items?.length" class="py-4 text-center text-sm text-gray-400">
+                주문 상품이 없습니다.
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 사이드바: 상태 변경 + 송장 등록 -->
+        <!-- 사이드바 -->
         <div class="space-y-6">
           <!-- 상태 변경 -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 class="font-semibold text-gray-900 mb-4">상태 변경</h2>
-            <div v-if="nextStatus(order.status)" class="space-y-3">
+            <div v-if="nextStatus(shipping.status)" class="space-y-3">
               <p class="text-sm text-gray-500">
-                {{ statusLabels[order.status] }} → {{ statusLabels[nextStatus(order.status)!] }}
+                {{ statusLabels[shipping.status] }} → {{ statusLabels[nextStatus(shipping.status)!] }}
               </p>
               <UButton
-                :label="`${statusLabels[nextStatus(order.status)!]}으로 변경`"
+                :label="`${statusLabels[nextStatus(shipping.status)!]}으로 변경`"
                 block
                 :loading="isUpdating"
-                @click="updateStatus(nextStatus(order.status)!)"
+                @click="updateStatus(nextStatus(shipping.status)!)"
               />
             </div>
             <p v-else class="text-sm text-gray-400">변경 가능한 상태가 없습니다.</p>
@@ -213,7 +228,7 @@ async function submitTracking() {
 
           <!-- 송장번호 등록 -->
           <div
-            v-if="order.status === 'PREPARING' || order.status === 'SHIPPING'"
+            v-if="shipping.status === 'PREPARING' || shipping.status === 'SHIPPING'"
             class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
           >
             <h2 class="font-semibold text-gray-900 mb-4">송장번호 등록</h2>
@@ -233,38 +248,19 @@ async function submitTracking() {
             </div>
           </div>
 
-          <!-- 타임라인 -->
+          <!-- 관련 링크 -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="font-semibold text-gray-900 mb-4">타임라인</h2>
-            <div class="space-y-3 text-sm">
-              <div class="flex gap-3">
-                <div class="w-2 h-2 mt-1.5 rounded-full bg-gray-400" />
-                <div>
-                  <p class="text-gray-500">주문 생성</p>
-                  <p class="text-xs text-gray-400">{{ formatDate(order.createdAt) }}</p>
-                </div>
-              </div>
-              <div v-if="order.paidAt" class="flex gap-3">
-                <div class="w-2 h-2 mt-1.5 rounded-full bg-blue-500" />
-                <div>
-                  <p class="text-gray-500">결제 완료</p>
-                  <p class="text-xs text-gray-400">{{ formatDate(order.paidAt) }}</p>
-                </div>
-              </div>
-              <div v-if="order.shippedAt" class="flex gap-3">
-                <div class="w-2 h-2 mt-1.5 rounded-full bg-orange-500" />
-                <div>
-                  <p class="text-gray-500">배송 시작</p>
-                  <p class="text-xs text-gray-400">{{ formatDate(order.shippedAt) }}</p>
-                </div>
-              </div>
-              <div v-if="order.deliveredAt" class="flex gap-3">
-                <div class="w-2 h-2 mt-1.5 rounded-full bg-green-500" />
-                <div>
-                  <p class="text-gray-500">배송 완료</p>
-                  <p class="text-xs text-gray-400">{{ formatDate(order.deliveredAt) }}</p>
-                </div>
-              </div>
+            <h2 class="font-semibold text-gray-900 mb-4">관련 페이지</h2>
+            <div class="space-y-2">
+              <UButton
+                :to="`/orders/${id}`"
+                variant="outline"
+                color="gray"
+                icon="i-heroicons-shopping-bag"
+                label="주문 상세"
+                block
+                size="sm"
+              />
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
-import { ProductStatus } from "@prisma/client";
+import { OrderStatus, ProductStatus } from "@prisma/client";
 import { ProductsService } from "./products.service";
 import { PrismaService } from "../prisma/prisma.service";
 import {
@@ -961,6 +961,204 @@ describe("ProductsService", () => {
       const result = await service.getNewArrivals(tenantId);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // getProductStats
+  // ---------------------------------------------------------------------------
+  describe("getProductStats", () => {
+    it("should return accurate stats when data exists", async () => {
+      prisma.product.count.mockResolvedValue(42);
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 4.567 },
+        _count: { id: 15 },
+      });
+      prisma.order.count.mockResolvedValue(128);
+
+      const result = await service.getProductStats(tenantId);
+
+      expect(result).toEqual({
+        availableCount: 42,
+        averageRating: 4.6,
+        reviewCount: 15,
+        completedOrderCount: 128,
+      });
+
+      expect(prisma.product.count).toHaveBeenCalledWith({
+        where: { tenantId, status: ProductStatus.AVAILABLE },
+      });
+      expect(prisma.review.aggregate).toHaveBeenCalledWith({
+        where: { tenantId, type: "BUY", isPublished: true },
+        _avg: { rating: true },
+        _count: { id: true },
+      });
+      expect(prisma.order.count).toHaveBeenCalledWith({
+        where: { tenantId, status: OrderStatus.COMPLETED },
+      });
+    });
+
+    it("should return default values when no data exists", async () => {
+      prisma.product.count.mockResolvedValue(0);
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: null },
+        _count: { id: 0 },
+      });
+      prisma.order.count.mockResolvedValue(0);
+
+      const result = await service.getProductStats(tenantId);
+
+      expect(result).toEqual({
+        availableCount: 0,
+        averageRating: 0,
+        reviewCount: 0,
+        completedOrderCount: 0,
+      });
+    });
+
+    it("should filter by tenantId", async () => {
+      const otherTenantId = "other-tenant";
+      prisma.product.count.mockResolvedValue(5);
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 3.0 },
+        _count: { id: 2 },
+      });
+      prisma.order.count.mockResolvedValue(10);
+
+      await service.getProductStats(otherTenantId);
+
+      expect(prisma.product.count).toHaveBeenCalledWith({
+        where: { tenantId: otherTenantId, status: ProductStatus.AVAILABLE },
+      });
+      expect(prisma.review.aggregate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: otherTenantId, type: "BUY", isPublished: true },
+        }),
+      );
+      expect(prisma.order.count).toHaveBeenCalledWith({
+        where: { tenantId: otherTenantId, status: OrderStatus.COMPLETED },
+      });
+    });
+
+    it("should round averageRating to one decimal place", async () => {
+      prisma.product.count.mockResolvedValue(1);
+      prisma.review.aggregate.mockResolvedValue({
+        _avg: { rating: 4.449 },
+        _count: { id: 3 },
+      });
+      prisma.order.count.mockResolvedValue(1);
+
+      const result = await service.getProductStats(tenantId);
+
+      expect(result.averageRating).toBe(4.4);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // getRecommendedProducts
+  // ---------------------------------------------------------------------------
+  describe("getRecommendedProducts", () => {
+    const mockRecommended = [
+      {
+        id: "product-1",
+        status: ProductStatus.AVAILABLE,
+        viewCount: 100,
+        category: { id: "cat-1", type: "SMARTPHONE" },
+        model: { id: "model-1", name: "iPhone 15" },
+        variant: { id: "variant-1", storage: "256GB" },
+      },
+      {
+        id: "product-2",
+        status: ProductStatus.AVAILABLE,
+        viewCount: 80,
+        category: { id: "cat-1", type: "SMARTPHONE" },
+        model: { id: "model-2", name: "Galaxy S24" },
+        variant: { id: "variant-2", storage: "128GB" },
+      },
+    ];
+
+    it("should return all recommended products without category filter", async () => {
+      prisma.product.findMany.mockResolvedValue(mockRecommended);
+
+      const result = await service.getRecommendedProducts(tenantId);
+
+      expect(result).toEqual(mockRecommended);
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        where: { tenantId, status: ProductStatus.AVAILABLE },
+        include: { category: true, model: true, variant: true },
+        orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
+        take: 8,
+      });
+    });
+
+    it("should apply category filter when provided", async () => {
+      prisma.product.findMany.mockResolvedValue([mockRecommended[0]]);
+
+      await service.getRecommendedProducts(tenantId, "SMARTPHONE");
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId,
+          status: ProductStatus.AVAILABLE,
+          category: { type: "SMARTPHONE" },
+        },
+        include: { category: true, model: true, variant: true },
+        orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
+        take: 8,
+      });
+    });
+
+    it("should respect custom limit parameter", async () => {
+      prisma.product.findMany.mockResolvedValue(mockRecommended);
+
+      await service.getRecommendedProducts(tenantId, undefined, 4);
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 4 }),
+      );
+    });
+
+    it("should return only AVAILABLE products", async () => {
+      prisma.product.findMany.mockResolvedValue(mockRecommended);
+
+      await service.getRecommendedProducts(tenantId);
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: ProductStatus.AVAILABLE,
+          }),
+        }),
+      );
+    });
+
+    it("should return empty array when no products match", async () => {
+      prisma.product.findMany.mockResolvedValue([]);
+
+      const result = await service.getRecommendedProducts(
+        tenantId,
+        "LAPTOP",
+        8,
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it("should apply category filter with limit together", async () => {
+      prisma.product.findMany.mockResolvedValue([mockRecommended[0]]);
+
+      await service.getRecommendedProducts(tenantId, "TABLET", 4);
+
+      expect(prisma.product.findMany).toHaveBeenCalledWith({
+        where: {
+          tenantId,
+          status: ProductStatus.AVAILABLE,
+          category: { type: "TABLET" },
+        },
+        include: { category: true, model: true, variant: true },
+        orderBy: [{ viewCount: "desc" }, { createdAt: "desc" }],
+        take: 4,
+      });
     });
   });
 });
