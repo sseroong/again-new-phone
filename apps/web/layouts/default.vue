@@ -59,7 +59,7 @@ const isActiveTab = (to: string) => {
         <div class="flex items-center justify-between h-16">
           <!-- Logo -->
           <NuxtLink to="/" class="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="딱내폰" class="h-9" />
+            <img src="/images/logo-horizontal.png" alt="딱내폰" class="h-12" />
           </NuxtLink>
 
           <!-- Right Actions -->
