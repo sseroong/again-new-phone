@@ -27,9 +27,9 @@ const targetProductIds = computed(() => {
   return [];
 });
 
-if (targetProductIds.value.length === 0) {
-  navigateTo('/buy');
-}
+// 빈 상품 체크는 템플릿의 v-if="!products?.length"에서 처리
+// setup 스크립트에서 navigateTo를 호출하면 auth 미들웨어보다 먼저 실행되어
+// 비로그인 시 /auth/login 대신 /buy로 리다이렉트되는 문제 발생
 
 const authHeaders = computed(() => ({
   Authorization: `Bearer ${authStore.tokens?.accessToken}`,

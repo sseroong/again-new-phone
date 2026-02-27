@@ -37,10 +37,13 @@ watch(searchKeyword, (val) => {
 // 오늘의 시세 API
 const { data: todayPrices, pending: todayPending } = await useAsyncData(
   'today-prices',
-  () => $fetch<any>(`${apiBase}/prices/today`, {
-    params: selectedCategory.value ? { category: selectedCategory.value } : {},
-  }),
-  { watch: [selectedCategory] },
+  () => {
+    const params: Record<string, string> = {};
+    if (selectedCategory.value) params.category = selectedCategory.value;
+    if (selectedBrand.value) params.brand = selectedBrand.value;
+    return $fetch<any>(`${apiBase}/prices/today`, { params });
+  },
+  { watch: [selectedCategory, selectedBrand] },
 );
 
 // 인기 모델 API
@@ -190,7 +193,7 @@ const trendIcon = (trend: string) => {
         </div>
 
         <!-- 카테고리 탭 -->
-        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
           <button
             v-for="tab in categoryTabs"
             :key="tab.key ?? 'all'"
@@ -203,6 +206,34 @@ const trendIcon = (trend: string) => {
             @click="selectedCategory = tab.key"
           >
             {{ tab.label }}
+          </button>
+        </div>
+
+        <!-- 브랜드 필터 -->
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <button
+            class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors"
+            :class="[
+              !selectedBrand
+                ? 'bg-gray-800 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            ]"
+            @click="selectedBrand = null"
+          >
+            전체 브랜드
+          </button>
+          <button
+            v-for="(brand, key) in BRANDS"
+            :key="key"
+            class="px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors"
+            :class="[
+              selectedBrand === key
+                ? 'bg-gray-800 text-white'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            ]"
+            @click="selectedBrand = key as string"
+          >
+            {{ brand.label }}
           </button>
         </div>
 

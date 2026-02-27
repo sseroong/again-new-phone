@@ -18,6 +18,8 @@ useHead({
   title: '구매하기',
 });
 
+const route = useRoute();
+const router = useRouter();
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBaseUrl as string;
 
@@ -25,8 +27,6 @@ function getImageUrl(path: string): string {
   if (path.startsWith('http')) return path;
   return `${apiBase}${path}`;
 }
-
-const route = useRoute();
 
 // 카테고리별 브랜드 매핑
 const CATEGORY_BRANDS: Record<string, Brand[]> = {
@@ -37,14 +37,27 @@ const CATEGORY_BRANDS: Record<string, Brand[]> = {
   EARPHONE: ['APPLE', 'SAMSUNG', 'OTHER'],
 };
 
-// 필터 상태 - URL query에서 초기 카테고리 읽기, 없으면 SMARTPHONE 기본값
-const initCategory = (route.query.category as DeviceCategory) || 'SMARTPHONE';
-const selectedCategory = ref<DeviceCategory | null>(initCategory);
-const selectedBrands = ref<Brand[]>([]);
-const selectedGrades = ref<ProductGrade[]>([]);
-const selectedStorage = ref<string[]>([]);
-const priceRange = ref<{ min: number; max: number } | null>(null);
-const sortBy = ref<'price_asc' | 'price_desc' | 'newest' | 'popular'>('newest');
+// 필터 상태 (URL 쿼리에서 초기화)
+const selectedCategory = ref<DeviceCategory | null>(
+  (route.query.category as DeviceCategory) || null,
+);
+const selectedBrands = ref<Brand[]>(
+  route.query.brand ? (route.query.brand as string).split(',') as Brand[] : [],
+);
+const selectedGrades = ref<ProductGrade[]>(
+  route.query.grade ? (route.query.grade as string).split(',') as ProductGrade[] : [],
+);
+const selectedStorage = ref<string[]>(
+  route.query.storage ? (route.query.storage as string).split(',') : [],
+);
+const priceRange = ref<{ min: number; max: number } | null>(
+  route.query.minPrice && route.query.maxPrice
+    ? { min: Number(route.query.minPrice), max: Number(route.query.maxPrice) }
+    : null,
+);
+const sortBy = ref<'price_asc' | 'price_desc' | 'newest' | 'popular'>(
+  (route.query.sortBy as any) || 'newest',
+);
 
 // 카테고리별 동적 브랜드 목록
 const filteredBrands = computed(() => {
@@ -56,7 +69,7 @@ const filteredBrands = computed(() => {
 });
 
 // 페이지네이션
-const page = ref(1);
+const page = ref(route.query.page ? Number(route.query.page) : 1);
 const pageSize = ref(24);
 
 // API 쿼리 파라미터
@@ -121,6 +134,23 @@ watch(selectedCategory, () => {
     const validBrands = CATEGORY_BRANDS[selectedCategory.value] || [];
     selectedBrands.value = selectedBrands.value.filter((b) => validBrands.includes(b));
   }
+});
+
+// 필터 변경 시 URL 쿼리 파라미터 동기화
+watch(queryParams, () => {
+  const query: Record<string, string> = {};
+  if (selectedCategory.value) query.category = selectedCategory.value;
+  if (selectedBrands.value.length) query.brand = selectedBrands.value.join(',');
+  if (selectedGrades.value.length) query.grade = selectedGrades.value.join(',');
+  if (selectedStorage.value.length) query.storage = selectedStorage.value.join(',');
+  if (priceRange.value) {
+    query.minPrice = String(priceRange.value.min);
+    query.maxPrice = String(priceRange.value.max);
+  }
+  if (sortBy.value !== 'newest') query.sortBy = sortBy.value;
+  if (page.value > 1) query.page = String(page.value);
+
+  router.replace({ query });
 });
 </script>
 

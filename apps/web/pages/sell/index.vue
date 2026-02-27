@@ -154,11 +154,17 @@ const handleSubmit = async () => {
       body: {
         category: selectedCategory.value,
         brand: selectedBrand.value,
-        model: selectedModel.value,
-        variant: selectedVariant.value,
+        modelName: selectedModel.value,
+        storage: selectedVariant.value,
         selfGrade: selectedGrade.value,
         tradeMethod: selectedTradeMethod.value,
         estimatedPrice: estimatedPrice.value,
+        deviceCondition: {
+          powerOn: true,
+          screenCondition: selectedGrade.value ? SELL_GRADES[selectedGrade.value].screenCondition : '',
+          bodyCondition: selectedGrade.value ? SELL_GRADES[selectedGrade.value].bodyCondition : '',
+          buttonsWorking: true,
+        },
       },
     });
 
