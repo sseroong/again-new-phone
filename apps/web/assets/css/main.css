@@ -48,6 +48,18 @@
     @apply bg-green-100 text-green-700;
   }
 
+  /* 등급별 색상 */
+  .grade-badge-NEW { @apply bg-emerald-100 text-emerald-700; }
+  .grade-badge-UNOPENED { @apply bg-green-100 text-green-700; }
+  .grade-badge-S_PLUS { @apply bg-blue-100 text-blue-700; }
+  .grade-badge-S { @apply bg-sky-100 text-sky-700; }
+  .grade-badge-A { @apply bg-indigo-100 text-indigo-700; }
+  .grade-badge-B_PLUS { @apply bg-violet-100 text-violet-700; }
+  .grade-badge-B { @apply bg-purple-100 text-purple-700; }
+  .grade-badge-C { @apply bg-yellow-100 text-yellow-700; }
+  .grade-badge-D { @apply bg-orange-100 text-orange-700; }
+  .grade-badge-E { @apply bg-red-100 text-red-700; }
+
   /* 프로모션 배너 */
   .promotion-banner {
     @apply relative w-full bg-gray-100;

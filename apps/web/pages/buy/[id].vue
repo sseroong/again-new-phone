@@ -153,12 +153,11 @@ const gradeInfo = computed(() => {
               <div class="flex gap-2 mb-3">
                 <span class="trust-badge trust-badge-quality">품질보증</span>
                 <span class="trust-badge trust-badge-verified">실물인증</span>
-                <span
-                  v-if="gradeInfo"
-                  class="px-2 py-0.5 text-xs font-medium rounded bg-gray-100"
-                >
-                  {{ gradeInfo.label }}
-                </span>
+                <ProductGradeBadge
+                  v-if="product.grade"
+                  :grade="product.grade"
+                  :linkable="true"
+                />
               </div>
 
               <h1 class="text-2xl font-bold">
@@ -186,9 +185,9 @@ const gradeInfo = computed(() => {
                 <span class="text-sm text-gray-500">배터리 효율</span>
                 <span class="text-sm font-medium">{{ product.batteryHealth }}%</span>
               </div>
-              <div v-if="product.grade" class="flex justify-between px-4 py-3">
+              <div v-if="product.grade" class="flex justify-between items-center px-4 py-3">
                 <span class="text-sm text-gray-500">등급</span>
-                <span class="text-sm font-medium">{{ gradeInfo?.label }}</span>
+                <ProductGradeBadge :grade="product.grade" :linkable="true" />
               </div>
               <div v-if="product.warrantyExpiry" class="flex justify-between px-4 py-3">
                 <span class="text-sm text-gray-500">보증 만료</span>
