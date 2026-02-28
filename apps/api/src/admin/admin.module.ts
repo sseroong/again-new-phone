@@ -11,6 +11,8 @@ import { AdminUsersController } from "./admin-users.controller";
 import { AdminUsersService } from "./admin-users.service";
 import { AdminCmsController } from "./admin-cms.controller";
 import { AdminCmsService } from "./admin-cms.service";
+import { AdminMetadataController } from "./admin-metadata.controller";
+import { AdminMetadataService } from "./admin-metadata.service";
 
 @Module({
   controllers: [
@@ -20,6 +22,7 @@ import { AdminCmsService } from "./admin-cms.service";
     AdminSellRequestsController,
     AdminUsersController,
     AdminCmsController,
+    AdminMetadataController,
   ],
   providers: [
     AdminDashboardService,
@@ -28,6 +31,7 @@ import { AdminCmsService } from "./admin-cms.service";
     AdminSellRequestsService,
     AdminUsersService,
     AdminCmsService,
+    AdminMetadataService,
   ],
 })
 export class AdminModule {}

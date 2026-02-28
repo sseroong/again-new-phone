@@ -123,7 +123,9 @@ export class AdminOrdersService {
         user: { select: { id: true, name: true, email: true, phone: true } },
         items: {
           include: {
-            product: { include: { category: true, model: true, variant: true } },
+            product: {
+              include: { category: true, model: true, variant: true },
+            },
           },
         },
       },

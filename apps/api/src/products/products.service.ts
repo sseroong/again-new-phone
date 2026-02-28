@@ -278,11 +278,7 @@ export class ProductsService {
     };
   }
 
-  async getRecommendedProducts(
-    tenantId: string,
-    category?: string,
-    limit = 8,
-  ) {
+  async getRecommendedProducts(tenantId: string, category?: string, limit = 8) {
     const where: Prisma.ProductWhereInput = {
       tenantId,
       status: ProductStatus.AVAILABLE,
