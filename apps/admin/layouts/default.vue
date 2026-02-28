@@ -16,6 +16,7 @@ const sidebarItems = [
   { label: '판매접수 관리', to: '/sell-requests', icon: 'i-heroicons-arrow-down-tray' },
   { label: '회원 관리', to: '/users', icon: 'i-heroicons-users' },
   { label: 'CMS 관리', to: '/cms', icon: 'i-heroicons-document-text' },
+  { label: '메타데이터 관리', to: '/metadata', icon: 'i-heroicons-cog-6-tooth' },
 ];
 
 const superAdminItems = [
@@ -40,9 +41,16 @@ const sidebarCollapsed = ref(false);
       :class="sidebarCollapsed ? 'w-16' : 'w-60'"
     >
       <!-- Logo -->
-      <div class="flex items-center h-16 px-4 border-b border-gray-800">
+      <div class="flex items-center justify-between h-16 px-4 border-b border-gray-800">
         <img src="/images/logo-horizontal.png" alt="딱내폰 관리자" class="h-7 flex-shrink-0" v-if="!sidebarCollapsed" />
         <img src="/images/logo-vertical.png" alt="딱내폰" class="h-8 w-8 object-contain flex-shrink-0" v-else />
+        <UButton
+          variant="ghost"
+          color="white"
+          :icon="sidebarCollapsed ? 'i-heroicons-bars-3' : 'i-heroicons-x-mark'"
+          size="xs"
+          @click="sidebarCollapsed = !sidebarCollapsed"
+        />
       </div>
 
       <!-- Navigation -->
@@ -90,14 +98,6 @@ const sidebarCollapsed = ref(false);
     >
       <!-- Topbar -->
       <header class="sticky top-0 z-30 h-16 bg-white border-b border-gray-200 flex items-center px-6">
-        <UButton
-          variant="ghost"
-          color="gray"
-          :icon="sidebarCollapsed ? 'i-heroicons-bars-3' : 'i-heroicons-x-mark'"
-          size="sm"
-          @click="sidebarCollapsed = !sidebarCollapsed"
-        />
-
         <div class="flex-1" />
 
         <!-- 테넌트 셀렉터 -->
