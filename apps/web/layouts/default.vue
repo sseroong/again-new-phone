@@ -56,10 +56,10 @@ const isActiveTab = (to: string) => {
     <header class="sticky top-0 z-50 bg-white border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Top Bar -->
-        <div class="flex items-center justify-between h-16">
+        <div class="flex items-center justify-between py-2">
           <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center">
-            <img src="/images/logo-horizontal.png" alt="딱내폰" class="h-12" />
+          <NuxtLink to="/" class="flex-shrink-0 flex items-center">
+            <img src="/images/logo-horizontal.svg" alt="딱내폰" class="h-16" />
           </NuxtLink>
 
           <!-- Right Actions -->
